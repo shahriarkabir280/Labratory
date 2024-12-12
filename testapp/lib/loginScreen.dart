@@ -1,20 +1,19 @@
-import 'package:flutter/gestures.dart';
+//import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'validator.dart'; // Import the validators.dart file
-import 'Terms_of_Services_and_Privacy_Policy.dart';
+import 'package:testapp/createOrJoinGroup.dart';
+import 'package:testapp/validator.dart'; // Import the validators.dart file
+import 'package:testapp/signupScreen.dart'; // Assuming this is where your Sign Up page is located
 
-class SignupScreen extends StatefulWidget {
+class loginScreen extends StatefulWidget {
   @override
-  _SignupScreenState createState() => _SignupScreenState();
+  _LoginScreenState createState() => _LoginScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreen> {
-  final _nameController = TextEditingController();
+class _LoginScreenState extends State<loginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
 
-  bool _isChecked = false;
+  bool _isPasswordVisible = false;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +40,7 @@ class _SignupScreenState extends State<SignupScreen> {
               const SizedBox(height: 20),
               // Page Title
               Text(
-                "Create Your Account",
+                "Welcome Back",
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -50,18 +49,12 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
               const SizedBox(height: 10),
               Text(
-                "Join FamNest and manage your family's life in one place!",
+                "Log in to your FamNest account.",
                 style: TextStyle(fontSize: 16, color: Colors.teal[600]),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 30),
               // Input Fields
-              _buildTextField(
-                controller: _nameController,
-                label: "Name",
-                icon: Icons.person,
-              ),
-              const SizedBox(height: 15),
               _buildTextField(
                 controller: _emailController,
                 label: "Email",
@@ -74,82 +67,31 @@ class _SignupScreenState extends State<SignupScreen> {
                 icon: Icons.lock,
                 isPassword: true,
               ),
-              const SizedBox(height: 15),
-              _buildTextField(
-                controller: _confirmPasswordController,
-                label: "Confirm Password",
-                icon: Icons.lock,
-                isPassword: true,
-              ),
               const SizedBox(height: 20),
-              // Terms and Conditions
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Checkbox(
-                    value: _isChecked,
-                    onChanged: (value) {
-                      setState(() {
-                        _isChecked = value!;
-                      });
-                    },
-                  ),
-                  Expanded(
-                    child: RichText(
-                      text: TextSpan(
-                        text: "I have read and agree to the ",
-                        style: TextStyle(color: Colors.teal[600], fontSize: 14),
-                        children: [
-                          TextSpan(
-                            text: "Terms of Services",
-                            style: TextStyle(
-                              color: Colors.teal[800],
-                              fontWeight: FontWeight.bold,
-                              decoration: TextDecoration.underline,
-                            ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () {
-                                //Validators.showSnackBar(context, "Navigate to Terms of Services");
-                                TermsOfServicesAndPrivacyPolicy.showTermsOfServices(context);
-                              },
-                          ),
-                          TextSpan(text: " and "),
-                          TextSpan(
-                            text: "Privacy Policy",
-                            style: TextStyle(
-                              color: Colors.teal[800],
-                              fontWeight: FontWeight.bold,
-                              decoration: TextDecoration.underline,
-                            ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () {
-                                //Validators.showSnackBar(context, "Navigate to Privacy Policy");
-                                TermsOfServicesAndPrivacyPolicy.showPrivacyPolicy(context);
-                              },
-                          ),
-                          TextSpan(text: "."),
-                        ],
-                      ),
+              // Forget Password
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {
+                    // Handle forget password action
+                    print("Navigate to Forget Password");
+                  },
+                  child: Text(
+                    "Forgot Password?",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.teal[700],
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ],
+                ),
               ),
               const SizedBox(height: 20),
-              // Sign-Up Button
+              // Login Button
               ElevatedButton(
                 onPressed: () {
-                  final nothavingName=Validators.validateFullName(_nameController.text);
                   final emailError = Validators.validateEmail(_emailController.text);
                   final passwordError = Validators.validatePassword(_passwordController.text);
-                  final confirmPasswordError = Validators.validateConfirmPassword(
-                    _passwordController.text,
-                    _confirmPasswordController.text,
-                  );
-
-                  if(nothavingName!=null){
-                    Validators.showSnackBar(context, nothavingName);
-                    return;
-                  }
 
                   if (emailError != null) {
                     Validators.showSnackBar(context, emailError);
@@ -161,18 +103,10 @@ class _SignupScreenState extends State<SignupScreen> {
                     return;
                   }
 
-                  if (confirmPasswordError != null) {
-                    Validators.showSnackBar(context, confirmPasswordError);
-                    return;
-                  }
-
-                  if (!_isChecked) {
-                    Validators.showSnackBar(context, "You must agree to the Terms and Privacy Policy");
-                    return;
-                  }
-
                   // If all validations pass
-                  Validators.showSnackBar(context, "Sign-Up Successful!", backgroundColor: Colors.green);
+                  Validators.showSnackBar(context, "Login Successful!", backgroundColor: Colors.green);
+                  Navigator.pushReplacement(context,
+                      MaterialPageRoute(builder: (context)=>createOrJoinGroup()),);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal[700],
@@ -182,25 +116,29 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                 ),
                 child: const Text(
-                  "Sign Up",
+                  "Login",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
               const SizedBox(height: 20),
-              // Already Have an Account
+              // No Account - Navigate to Sign Up Page
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Already have an account?",
+                    "Don't have an account?",
                     style: TextStyle(fontSize: 16, color: Colors.teal[600]),
                   ),
                   TextButton(
                     onPressed: () {
-                      // Navigate to Sign-In Page
+                      // Navigate to Sign Up Page
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => signupScreen()),
+                      );
                     },
                     child: Text(
-                      "Sign In",
+                      "Sign Up",
                       style: TextStyle(fontSize: 16, color: Colors.teal[700], fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -222,7 +160,7 @@ class _SignupScreenState extends State<SignupScreen> {
   }) {
     return TextField(
       controller: controller,
-      obscureText: isPassword,
+      obscureText: isPassword ? !_isPasswordVisible : false,
       decoration: InputDecoration(
         prefixIcon: Icon(icon, color: Colors.teal),
         labelText: label,
@@ -237,6 +175,19 @@ class _SignupScreenState extends State<SignupScreen> {
           borderSide: BorderSide(color: Colors.teal[300]!),
           borderRadius: BorderRadius.circular(10),
         ),
+        suffixIcon: isPassword
+            ? IconButton(
+          icon: Icon(
+            _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+            color: Colors.teal,
+          ),
+          onPressed: () {
+            setState(() {
+              _isPasswordVisible = !_isPasswordVisible;
+            });
+          },
+        )
+            : null,
       ),
     );
   }

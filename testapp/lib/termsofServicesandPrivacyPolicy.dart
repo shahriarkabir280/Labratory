@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class TermsOfServicesAndPrivacyPolicy {
+class termsOfServicesAndPrivacyPolicy {
   static void showTermsOfServices(BuildContext context) {
     showModalBottomSheet(
       context: context,
