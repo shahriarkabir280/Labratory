@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:testapp/signup_screen.dart';
-import 'package:testapp/SplashScreen.dart';
+import 'package:testapp/splashScreen.dart';
+import 'package:testapp/loginScreen.dart';
 
 
 
@@ -18,8 +18,8 @@ class MyApp extends StatelessWidget{
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
-        '/': (context) => SplashScreen(),
-        '/home': (context) => SignupScreen(), // Replace HomeScreen with your main screen
+        '/': (context) => splashScreen(),
+        '/home': (context) => loginScreen(),// Replace HomeScreen with your main screen
       },
     );
   }

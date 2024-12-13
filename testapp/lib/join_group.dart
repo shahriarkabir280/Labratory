@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'All_in_one.dart';
 import 'create_join_group.dart';
 
 // Join Group Activity
@@ -8,11 +9,12 @@ class JoinGroupActivity extends StatelessWidget{
   Widget build(BuildContext context){
     final screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
-        resizeToAvoidBottomInset: false,
+        //resizeToAvoidBottomInset: false,
+      backgroundColor: Colors.teal[50],
       appBar: AppBar(backgroundColor: Colors.teal[50]),
-      body: Container(
-        color: Colors.teal[50],
-        child: Center( // Ensures the content is centered horizontally and vertically
+      body: SingleChildScrollView(
+          physics: BouncingScrollPhysics(),
+          // reverse : true,// Ensures the content is centered horizontally and vertically
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start, // Aligns children at the top
             crossAxisAlignment: CrossAxisAlignment.center, // Centers children horizontally
@@ -28,7 +30,7 @@ class JoinGroupActivity extends StatelessWidget{
               ),
               Text(
                 'Join Your First Group',
-                style: TextStyle(color: Colors.purple ,fontSize: 29, fontWeight: FontWeight.bold),
+                style: TextStyle(color: Colors.teal[800] ,fontSize: 29, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: screenHeight * 0.035),
               Padding(
@@ -51,7 +53,9 @@ class JoinGroupActivity extends StatelessWidget{
               ),
               SizedBox(height: screenHeight * 0.10),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context)=>AllInOnePage()));
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.lightBlue, // Button's background color
                   foregroundColor: Colors.white,     // Text color
@@ -64,11 +68,12 @@ class JoinGroupActivity extends StatelessWidget{
                 child: Text(
                   "Submit",
                   style: TextStyle(
-                    fontSize: 25,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
+
               // SizedBox(height: screenHeight * 0.09),
               // ElevatedButton(
               //   onPressed: () {
@@ -89,10 +94,12 @@ class JoinGroupActivity extends StatelessWidget{
               //     ),
               //   ),
               // ),
+              Padding(
+                padding :EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+             ),
             ],
           ),
         ),
-      ),
     );
   }
 }

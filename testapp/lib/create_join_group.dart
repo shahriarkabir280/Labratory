@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:testapp/loadingScreen.dart';
 import 'create_group.dart';
 import 'join_group.dart';
-
+import 'loginScreen.dart';
 // Create Join Group Activity
 class CreateJoinActivity extends StatelessWidget{
   const CreateJoinActivity({super.key}); // constructor
@@ -10,8 +11,10 @@ class CreateJoinActivity extends StatelessWidget{
     final screenHeight = MediaQuery.of(context).size.height;
     // Scaffold (occupies the whole device screen)
     return Scaffold(
-        appBar: AppBar(backgroundColor: Colors.teal[50]),
-        body: Container(
+        appBar:AppBar(
+          backgroundColor: Colors.teal[50],
+        ),
+      body: Container(
           color: Colors.teal[50],
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -29,14 +32,14 @@ class CreateJoinActivity extends StatelessWidget{
                     ),
                   ),
                   SizedBox(height: screenHeight * 0.01), // Adds space between the image and the text
-                  Text('Create or Join Group', style: TextStyle(color: Colors.deepPurple, fontSize: 32, fontWeight: FontWeight.bold,),),
+                  Text('Create or Join Group', style: TextStyle(color: Colors.teal[800], fontSize: 32, fontWeight: FontWeight.bold,),),
                   SizedBox(height: screenHeight * 0.07),
                   ElevatedButton(
                     onPressed: () {
                       Navigator.push(context, MaterialPageRoute(builder: (context)=>CreateGroupActivity()));
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple, // Button's background color
+                      backgroundColor: Colors.teal[800], // Button's background color
                       foregroundColor: Colors.white,     // Text color
                       shadowColor: Colors.grey,          // Shadow color
                       elevation: 8,                      // Elevation for the button's shadow
@@ -59,7 +62,7 @@ class CreateJoinActivity extends StatelessWidget{
                       Navigator.push(context, MaterialPageRoute(builder: (context)=>JoinGroupActivity()));
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple, // Button's background color
+                      backgroundColor: Colors.teal[800], // Button's background color
                       foregroundColor: Colors.white,     // Text color
                       shadowColor: Colors.grey,          // Shadow color
                       elevation: 8,                      // Elevation for the button's shadow

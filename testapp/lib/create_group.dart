@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:testapp/All_in_one.dart';
 import 'create_join_group.dart';
 
 // Create Group Activity
@@ -9,10 +10,11 @@ class CreateGroupActivity extends StatelessWidget{
     // Get screen height
     final screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      // resizeToAvoidBottomInset: false,
+      backgroundColor: Colors.teal[50],
       appBar: AppBar(backgroundColor: Colors.teal[50]),
-      body: Container(
-        color: Colors.teal[50],
+      body: SingleChildScrollView(
+        physics: BouncingScrollPhysics(),
         child: Center( // Ensures the content is centered horizontally and vertically
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start, // Aligns children at the top
@@ -29,7 +31,7 @@ class CreateGroupActivity extends StatelessWidget{
               ),
               Text(
                 'Create Your First Group',
-                style: TextStyle(color: Colors.purple ,fontSize: 29, fontWeight: FontWeight.bold),
+                style: TextStyle(color: Colors.teal[800] ,fontSize: 29, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: screenHeight * 0.035),
               Padding(
@@ -50,7 +52,9 @@ class CreateGroupActivity extends StatelessWidget{
               ),
               SizedBox(height: screenHeight * 0.10),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context)=>AllInOnePage()));
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.lightBlue, // Button's background color
                   foregroundColor: Colors.white,     // Text color
@@ -63,7 +67,7 @@ class CreateGroupActivity extends StatelessWidget{
                 child: Text(
                   "Done",
                   style: TextStyle(
-                    fontSize: 25,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
