@@ -31,6 +31,10 @@ dependencies:
   flutter:
     sdk: flutter
   url_launcher: ^6.0.20
+  flutter_svg: ^2.0.7
+  image_picker: ^0.8.5
+  video_player: ^2.4.5
+  file_picker: ^5.2.4
 
 
 
@@ -65,9 +69,16 @@ flutter:
   assets:
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
-      - assets/Famnestlogo.png
-      - assets/test.png
-      - assets/banner.png
+      - assets/authentications/famNestlogo.png
+      - assets/authentications/test.png
+      - assets/authentications/banner.png
+      - assets/slideshowimages/slide1.jpg
+      - assets/slideshowimages/slide2.png
+      - assets/slideshowimages/slide3.jpg
+      - assets/gridicons/document.svg
+      - assets/gridicons/event.svg
+      - assets/gridicons/memory.svg
+      - assets/gridicons/expense.svg
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

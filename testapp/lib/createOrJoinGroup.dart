@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:testapp/loginScreen.dart';
-//import 'package:testapp/mainHomepage.dart';
+import 'package:testapp/mainHomepage.dart';
 
 class createOrJoinGroup extends StatefulWidget {
   @override
@@ -32,7 +32,7 @@ class _CreateOrJoinGroupState extends State<createOrJoinGroup> {
                   color: Colors.teal[300],
                   borderRadius: BorderRadius.circular(15),
                   image: DecorationImage(
-                    image: AssetImage('assets/banner.png'), // Replace with your banner image
+                    image: AssetImage('assets/authentications/banner.png'), // Replace with your banner image
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -102,6 +102,31 @@ class _CreateOrJoinGroupState extends State<createOrJoinGroup> {
                   label: "Group Code",
                   icon: Icons.vpn_key,
                 ),
+                const SizedBox(height: 15),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Want to create a new group?",
+                      style: TextStyle(fontSize: 16, color: Colors.teal[600]),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _isJoiningGroup = false;
+                        });
+                      },
+                      child: Text(
+                        "Create Group",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal[700],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
               const SizedBox(height: 30),
               // Cancel and Done Buttons
@@ -131,10 +156,11 @@ class _CreateOrJoinGroupState extends State<createOrJoinGroup> {
                   // Done Button
                   ElevatedButton(
                     onPressed: () {
-                     /* Navigator.pushReplacement(
+                      // Handle Done Action
+                      Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => MainHomepage()),
-                      );*/
+                        MaterialPageRoute(builder: (context)=>mainHomepage(groupName: "Test Group")),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal[700],

@@ -18,7 +18,7 @@ class MyApp extends StatelessWidget{
       debugShowCheckedModeBanner: false,
       initialRoute: '/',
       routes: {
-        '/': (context) => splashScreen(),
+        '/':(context)=> splashScreen(),
         '/home': (context) => loginScreen(),// Replace HomeScreen with your main screen
       },
     );

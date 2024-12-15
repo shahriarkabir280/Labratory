@@ -34,7 +34,7 @@ class _SignupScreenState extends State<signupScreen> {
                   width: 150,
                   height: 150,
                   child: Image.asset(
-                    'assets/test.png', // Replace with your SVG or image path
+                    'assets/authentications/test.png', // Replace with your SVG or image path
                     fit: BoxFit.cover,
                   ),
                 ),

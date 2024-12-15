@@ -27,7 +27,7 @@ class _SplashScreenState extends State<splashScreen> {
             // App Logo
             ClipOval(
               child: Image.asset(
-                'assets/Famnestlogo.png', // Replace with the path to your logo image
+                'assets/authentications/famNestlogo.png', // Replace with the path to your logo image
                 width: 120,
                 height: 120,
                 fit: BoxFit.cover,
