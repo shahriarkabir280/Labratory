@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:testapp/timeCapsuleScreen.dart';  // Import the TimeCapsuleScreen
+import 'package:testapp/features/timeCapsuleScreen.dart';  // Import the TimeCapsuleScreen
+import 'package:testapp/features/eventPlanningPage.dart';
 
 class mainHomepage extends StatefulWidget {
   final String groupName;
@@ -189,6 +190,13 @@ class _MainHomepageState extends State<mainHomepage> {
               itemBuilder: (context, index) {
                 return GestureDetector(
                   onTap: () {
+                    if(index == 2){
+                      // Navigate to TimeCapsuleScreen when the "Memories" grid item is tapped
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => eventPlannerPage()),
+                      );
+                    }
                     if (index == 3) {
                       // Navigate to TimeCapsuleScreen when the "Memories" grid item is tapped
                       Navigator.push(

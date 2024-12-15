@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:testapp/loginScreen.dart';
-import 'package:testapp/mainHomepage.dart';
+import 'package:testapp/authentications/loginScreen.dart';
+import 'package:testapp/features/mainHomepage.dart';
 
 class createOrJoinGroup extends StatefulWidget {
   @override

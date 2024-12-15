@@ -1,19 +1,21 @@
-//import 'package:flutter/gestures.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:testapp/createOrJoinGroup.dart';
-import 'package:testapp/validator.dart'; // Import the validators.dart file
-import 'package:testapp/signupScreen.dart'; // Assuming this is where your Sign Up page is located
+import 'package:testapp/authentications/validator.dart'; // Import the validators.dart file
+import 'package:testapp/authentications/termsofServicesandPrivacyPolicy.dart';
+import 'package:testapp/authentications/loginScreen.dart';
 
-class loginScreen extends StatefulWidget {
+class signupScreen extends StatefulWidget {
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  _SignupScreenState createState() => _SignupScreenState();
 }
 
-class _LoginScreenState extends State<loginScreen> {
+class _SignupScreenState extends State<signupScreen> {
+  final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
-  bool _isPasswordVisible = false;
+  bool _isChecked = false;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +42,7 @@ class _LoginScreenState extends State<loginScreen> {
               const SizedBox(height: 20),
               // Page Title
               Text(
-                "Welcome Back",
+                "Create Your Account",
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -49,12 +51,18 @@ class _LoginScreenState extends State<loginScreen> {
               ),
               const SizedBox(height: 10),
               Text(
-                "Log in to your FamNest account.",
+                "Join FamNest and manage your family's life in one place!",
                 style: TextStyle(fontSize: 16, color: Colors.teal[600]),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 30),
               // Input Fields
+              _buildTextField(
+                controller: _nameController,
+                label: "Name",
+                icon: Icons.person,
+              ),
+              const SizedBox(height: 15),
               _buildTextField(
                 controller: _emailController,
                 label: "Email",
@@ -67,31 +75,82 @@ class _LoginScreenState extends State<loginScreen> {
                 icon: Icons.lock,
                 isPassword: true,
               ),
-              const SizedBox(height: 20),
-              // Forget Password
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {
-                    // Handle forget password action
-                    print("Navigate to Forget Password");
-                  },
-                  child: Text(
-                    "Forgot Password?",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.teal[700],
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+              const SizedBox(height: 15),
+              _buildTextField(
+                controller: _confirmPasswordController,
+                label: "Confirm Password",
+                icon: Icons.lock,
+                isPassword: true,
               ),
               const SizedBox(height: 20),
-              // Login Button
+              // Terms and Conditions
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Checkbox(
+                    value: _isChecked,
+                    onChanged: (value) {
+                      setState(() {
+                        _isChecked = value!;
+                      });
+                    },
+                  ),
+                  Expanded(
+                    child: RichText(
+                      text: TextSpan(
+                        text: "I have read and agree to the ",
+                        style: TextStyle(color: Colors.teal[600], fontSize: 14),
+                        children: [
+                          TextSpan(
+                            text: "Terms of Services",
+                            style: TextStyle(
+                              color: Colors.teal[800],
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                //Validators.showSnackBar(context, "Navigate to Terms of Services");
+                                termsOfServicesAndPrivacyPolicy.showTermsOfServices(context);
+                              },
+                          ),
+                          TextSpan(text: " and "),
+                          TextSpan(
+                            text: "Privacy Policy",
+                            style: TextStyle(
+                              color: Colors.teal[800],
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                //Validators.showSnackBar(context, "Navigate to Privacy Policy");
+                                termsOfServicesAndPrivacyPolicy.showPrivacyPolicy(context);
+                              },
+                          ),
+                          TextSpan(text: "."),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Sign-Up Button
               ElevatedButton(
                 onPressed: () {
+                  final nothavingName=Validators.validateFullName(_nameController.text);
                   final emailError = Validators.validateEmail(_emailController.text);
                   final passwordError = Validators.validatePassword(_passwordController.text);
+                  final confirmPasswordError = Validators.validateConfirmPassword(
+                    _passwordController.text,
+                    _confirmPasswordController.text,
+                  );
+
+                  if(nothavingName!=null){
+                    Validators.showSnackBar(context, nothavingName);
+                    return;
+                  }
 
                   if (emailError != null) {
                     Validators.showSnackBar(context, emailError);
@@ -103,10 +162,18 @@ class _LoginScreenState extends State<loginScreen> {
                     return;
                   }
 
+                  if (confirmPasswordError != null) {
+                    Validators.showSnackBar(context, confirmPasswordError);
+                    return;
+                  }
+
+                  if (!_isChecked) {
+                    Validators.showSnackBar(context, "You must agree to the Terms and Privacy Policy");
+                    return;
+                  }
+
                   // If all validations pass
-                  Validators.showSnackBar(context, "Login Successful!", backgroundColor: Colors.green);
-                  Navigator.pushReplacement(context,
-                      MaterialPageRoute(builder: (context)=>createOrJoinGroup()),);
+                  Validators.showSnackBar(context, "Sign-Up Successful!", backgroundColor: Colors.green);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal[700],
@@ -116,29 +183,29 @@ class _LoginScreenState extends State<loginScreen> {
                   ),
                 ),
                 child: const Text(
-                  "Login",
+                  "Sign Up",
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
               ),
               const SizedBox(height: 20),
-              // No Account - Navigate to Sign Up Page
+              // Already Have an Account
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Don't have an account?",
+                    "Already have an account?",
                     style: TextStyle(fontSize: 16, color: Colors.teal[600]),
                   ),
                   TextButton(
                     onPressed: () {
-                      // Navigate to Sign Up Page
+                      // Navigate to Sign-In Page
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => signupScreen()),
+                      MaterialPageRoute(builder: (context)=>loginScreen()),
                       );
                     },
                     child: Text(
-                      "Sign Up",
+                      "login",
                       style: TextStyle(fontSize: 16, color: Colors.teal[700], fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -160,7 +227,7 @@ class _LoginScreenState extends State<loginScreen> {
   }) {
     return TextField(
       controller: controller,
-      obscureText: isPassword ? !_isPasswordVisible : false,
+      obscureText: isPassword,
       decoration: InputDecoration(
         prefixIcon: Icon(icon, color: Colors.teal),
         labelText: label,
@@ -175,19 +242,6 @@ class _LoginScreenState extends State<loginScreen> {
           borderSide: BorderSide(color: Colors.teal[300]!),
           borderRadius: BorderRadius.circular(10),
         ),
-        suffixIcon: isPassword
-            ? IconButton(
-          icon: Icon(
-            _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-            color: Colors.teal,
-          ),
-          onPressed: () {
-            setState(() {
-              _isPasswordVisible = !_isPasswordVisible;
-            });
-          },
-        )
-            : null,
       ),
     );
   }
