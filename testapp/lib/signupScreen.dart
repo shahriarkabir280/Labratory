@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:testapp/validator.dart'; // Import the validators.dart file
 import 'package:testapp/termsofServicesandPrivacyPolicy.dart';
 import 'package:testapp/loginScreen.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class signupScreen extends StatefulWidget {
   @override
@@ -14,7 +16,35 @@ class _SignupScreenState extends State<signupScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  // fastapi ke msg pathacchi
+  Future<void> sendDataTofastAPI(String email, String pass) async {
+    final String url = 'http://10.0.2.2:8000/save-input/'; // default android emu url diye connect hocchi
 
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({"email": email, "password":pass}),
+    );
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+
+      // Show message from the response
+      if(responseData['message']=="Successfully Registered")
+      {ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(responseData['message']),backgroundColor: Colors.lightGreen),
+      );}
+      else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(responseData['message']),backgroundColor: Colors.redAccent),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save data')),
+      );
+    }
+  }
   bool _isChecked = false;
 
   @override
@@ -146,6 +176,7 @@ class _SignupScreenState extends State<signupScreen> {
                     _passwordController.text,
                     _confirmPasswordController.text,
                   );
+                  final inputText = _nameController.text;
 
                   if(nothavingName!=null){
                     Validators.showSnackBar(context, nothavingName);
@@ -172,8 +203,17 @@ class _SignupScreenState extends State<signupScreen> {
                     return;
                   }
 
-                  // If all validations pass
-                  Validators.showSnackBar(context, "Sign-Up Successful!", backgroundColor: Colors.green);
+                  if (_emailController.text.isNotEmpty) {
+                    sendDataTofastAPI(_emailController.text , _passwordController.text);// Send the input text to the FastAPI backend
+                    } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Please enter Username')),
+                    );
+                  }
+
+                  //all ok
+                  // Validators.showSnackBar(context, "Successfully registered", backgroundColor: Colors.lightGreen);
+
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal[700],
