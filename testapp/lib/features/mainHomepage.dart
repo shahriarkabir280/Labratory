@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:testapp/features/timeCapsuleScreen.dart';  // Import the TimeCapsuleScreen
 import 'package:testapp/features/eventPlanningPage.dart';
+import 'package:testapp/features/Document store/document_storage_page.dart';
 
 class mainHomepage extends StatefulWidget {
   final String groupName;
@@ -190,8 +191,15 @@ class _MainHomepageState extends State<mainHomepage> {
               itemBuilder: (context, index) {
                 return GestureDetector(
                   onTap: () {
+                    if(index == 1){
+                      // Navigate to TimeCapsuleScreen when the "Document Storage" grid item is tapped
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) =>documentStoragePage()),
+                      );
+                    }
                     if(index == 2){
-                      // Navigate to TimeCapsuleScreen when the "Memories" grid item is tapped
+                      // Navigate to TimeCapsuleScreen when the "event Planning" grid item is tapped
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => eventPlannerPage()),
