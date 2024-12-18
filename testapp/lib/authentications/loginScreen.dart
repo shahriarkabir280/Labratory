@@ -1,8 +1,16 @@
-//import 'package:flutter/gestures.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:testapp/features/createOrJoinGroup.dart';
+import 'package:testapp/features/mainHomepage.dart';
+// import 'package:testapp/create_join_group.dart';
 import 'package:testapp/authentications/validator.dart'; // Import the validators.dart file
 import 'package:testapp/authentications/signupScreen.dart'; // Assuming this is where your Sign Up page is located
+import 'package:testapp/backend_connections/FASTAPI.dart';
+
+final FASTAPIhere FastAPIonthego = FASTAPIhere();
+// Global variable
+Map<String, int> ok = {"num": 1};
+
 
 class loginScreen extends StatefulWidget {
   @override
@@ -12,7 +20,40 @@ class loginScreen extends StatefulWidget {
 class _LoginScreenState extends State<loginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-
+  // fastapi ke msg pathacchi
+  // Future<bool> login_check(String email, String pass) async {
+  //   final String url = 'http://10.0.2.2:8000/check-input/'; // default android emu url diye connect hocchi
+  //
+  //   final response = await http.post(
+  //     Uri.parse(url),
+  //     headers: {'Content-Type': 'application/json'},
+  //     body: json.encode({"email": email , "password": pass}),
+  //   );
+  //
+  //   if (response.statusCode == 200) {
+  //     final responseData = json.decode(response.body);
+  //
+  //     // Show message from the response
+  //     if(responseData['message']=="Login Successful")
+  //     {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text(responseData['message']),backgroundColor: Colors.lightGreen),
+  //
+  //     );
+  //     return true;}
+  //     else {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text(responseData['message']),backgroundColor: Colors.redAccent),
+  //       );
+  //       return false;
+  //     }
+  //   } else {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Failed to save data')),
+  //     );
+  //     return false;
+  //   }
+  // }
   bool _isPasswordVisible = false;
 
   @override
@@ -89,7 +130,7 @@ class _LoginScreenState extends State<loginScreen> {
               const SizedBox(height: 20),
               // Login Button
               ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   final emailError = Validators.validateEmail(_emailController.text);
                   final passwordError = Validators.validatePassword(_passwordController.text);
 
@@ -102,12 +143,23 @@ class _LoginScreenState extends State<loginScreen> {
                     Validators.showSnackBar(context, passwordError);
                     return;
                   }
-
                   // If all validations pass
-                  Validators.showSnackBar(context, "Login Successful!", backgroundColor: Colors.green);
-                  Navigator.pushReplacement(context,
-                      MaterialPageRoute(builder: (context)=>createOrJoinGroup()),);
-                },
+                  //Validators.showSnackBar(context, "Login Successful!", backgroundColor: Colors.green);
+                  bool isOK = await FastAPIonthego.login_check(context,_emailController.text , _passwordController.text);
+                  if(isOK) {
+                    bool groupExists = await FastAPIonthego.check_one_group_criteria(context, _emailController.text);
+                    if (groupExists) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => mainHomepage(groupName: "Test Group")),
+                      );
+                  }
+                    else {
+                      Navigator.push(context, MaterialPageRoute(
+                          builder: (context) => (createOrJoinGroup(email : _emailController.text))));
+                    }
+                  }else return;
+                  },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal[700],
                   padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
