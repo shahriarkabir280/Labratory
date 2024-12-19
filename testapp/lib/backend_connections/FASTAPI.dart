@@ -9,6 +9,10 @@ import 'package:testapp/backend_connections/api%20services/user_registration.dar
 import 'package:testapp/backend_connections/api%20services/user_login_check.dart';
 import 'package:testapp/backend_connections/api%20services/user_create_group.dart';
 
+import 'api services/get_first_group.dart';
+import 'api services/get_name.dart';
+import 'api services/get_password.dart';
+
 
 // fastapi ke msg pathacchi
 class FASTAPIhere{
@@ -46,4 +50,20 @@ class FASTAPIhere{
   Future<String> find_group(BuildContext context, String groupCode) async {
     return await finding_group(context, groupCode);
   }
+
+  // find name
+  Future<String> find_name(BuildContext context, String email) async {
+    return await get_name(context, email);
+  }
+
+  // find password
+  Future<String> find_password(BuildContext context, String email) async {
+    return await get_password(context, email);
+  }
+
+  // find first group
+  Future<String> find_first_group(BuildContext context, String email) async {
+    return await get_first_group(context, email);
+  }
+
 }
