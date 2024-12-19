@@ -208,11 +208,13 @@ class _CreateOrJoinGroupState extends State<createOrJoinGroup> {
                               backgroundColor: Colors.lightGreen,
                             ),
                           );
+                          String name = await FastAPIonthego.find_name(context, widget.email);
+                          String password = await FastAPIonthego.find_password(context, widget.email);
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  mainHomepage(groupName: grp),
+                                  mainHomepage(email: widget.email, name: name , password: password, groupName: grp),
                             ),
                           );
                         } else {
@@ -262,14 +264,17 @@ class _CreateOrJoinGroupState extends State<createOrJoinGroup> {
                               ),
                               actions: [
                                 TextButton(
-                                  onPressed: () {
+                                  onPressed: () async{
+                                    String name = await FastAPIonthego.find_name(context, widget.email);
+                                    String password = await FastAPIonthego.find_password(context, widget.email);
+
                                     Navigator.of(context)
                                         .pop(); // Close the dialog
                                     Navigator.pushReplacement(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            mainHomepage(groupName: groupName),
+                                            mainHomepage(email: widget.email, name: name , password: password, groupName: groupName),
                                       ),
                                     );
                                   },
