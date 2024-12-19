@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:testapp/features/createOrJoinGroup.dart';
 import 'package:testapp/features/mainHomepage.dart';
+
 // import 'package:testapp/create_join_group.dart';
 import 'package:testapp/authentications/validator.dart'; // Import the validators.dart file
 import 'package:testapp/authentications/signupScreen.dart'; // Assuming this is where your Sign Up page is located
@@ -11,7 +12,6 @@ final FASTAPIhere FastAPIonthego = FASTAPIhere();
 // Global variable
 Map<String, int> ok = {"num": 1};
 
-
 class loginScreen extends StatefulWidget {
   @override
   _LoginScreenState createState() => _LoginScreenState();
@@ -20,6 +20,7 @@ class loginScreen extends StatefulWidget {
 class _LoginScreenState extends State<loginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
   // fastapi ke msg pathacchi
   // Future<bool> login_check(String email, String pass) async {
   //   final String url = 'http://10.0.2.2:8000/check-input/'; // default android emu url diye connect hocchi
@@ -73,7 +74,8 @@ class _LoginScreenState extends State<loginScreen> {
                   width: 150,
                   height: 150,
                   child: Image.asset(
-                    'assets/authentications/test.png', // Replace with your SVG or image path
+                    'assets/authentications/test.png',
+                    // Replace with your SVG or image path
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -131,8 +133,10 @@ class _LoginScreenState extends State<loginScreen> {
               // Login Button
               ElevatedButton(
                 onPressed: () async {
-                  final emailError = Validators.validateEmail(_emailController.text);
-                  final passwordError = Validators.validatePassword(_passwordController.text);
+                  final emailError =
+                      Validators.validateEmail(_emailController.text);
+                  final passwordError =
+                      Validators.validatePassword(_passwordController.text);
 
                   if (emailError != null) {
                     Validators.showSnackBar(context, emailError);
@@ -145,31 +149,56 @@ class _LoginScreenState extends State<loginScreen> {
                   }
                   // If all validations pass
                   //Validators.showSnackBar(context, "Login Successful!", backgroundColor: Colors.green);
-                  bool isOK = await FastAPIonthego.login_check(context,_emailController.text , _passwordController.text);
-                  if(isOK) {
-                    bool groupExists = await FastAPIonthego.check_one_group_criteria(context, _emailController.text);
+                  bool isOK = await FastAPIonthego.login_check(
+                      context, _emailController.text, _passwordController.text);
+                  if (isOK) {
+                    bool groupExists =
+                        await FastAPIonthego.check_one_group_criteria(
+                            context, _emailController.text);
                     if (groupExists) {
+                      print(_emailController.text);
+                      String name = await FastAPIonthego.find_name(
+                          context, _emailController.text);
+                      String password = await FastAPIonthego.find_password(
+                          context, _emailController.text);
+                      String first_group = await FastAPIonthego.find_first_group(context, _emailController.text);
+                      // print(name);
+                      // print("henry here");
+                      // print(password);
+                      // print(first_group);
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => mainHomepage(groupName: "Test Group")),
+                        MaterialPageRoute(
+                            builder: (context) => mainHomepage(
+                                email: _emailController.text,
+                                name: name,
+                                password: password,
+                                groupName: first_group)),
                       );
-                  }
-                    else {
-                      Navigator.push(context, MaterialPageRoute(
-                          builder: (context) => (createOrJoinGroup(email : _emailController.text))));
+                    } else {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => (createOrJoinGroup(
+                                  email: _emailController.text))));
                     }
-                  }else return;
-                  },
+                  } else
+                    return;
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal[700],
-                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
                 child: const Text(
                   "Login",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
                 ),
               ),
               const SizedBox(height: 20),
@@ -191,7 +220,10 @@ class _LoginScreenState extends State<loginScreen> {
                     },
                     child: Text(
                       "Sign Up",
-                      style: TextStyle(fontSize: 16, color: Colors.teal[700], fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.teal[700],
+                          fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -229,16 +261,16 @@ class _LoginScreenState extends State<loginScreen> {
         ),
         suffixIcon: isPassword
             ? IconButton(
-          icon: Icon(
-            _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
-            color: Colors.teal,
-          ),
-          onPressed: () {
-            setState(() {
-              _isPasswordVisible = !_isPasswordVisible;
-            });
-          },
-        )
+                icon: Icon(
+                  _isPasswordVisible ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.teal,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isPasswordVisible = !_isPasswordVisible;
+                  });
+                },
+              )
             : null,
       ),
     );
