@@ -14,8 +14,10 @@ import 'Drawer/termsAndConditions.dart';
 
 class mainHomepage extends StatefulWidget {
   final String groupName;
-
-  mainHomepage({required this.groupName});
+  final String name;
+  final String password;
+  final String email;
+  mainHomepage({required this.email,required this.name,required this.password,required this.groupName});
 
   @override
   _MainHomepageState createState() => _MainHomepageState();
@@ -132,7 +134,7 @@ class _MainHomepageState extends State<mainHomepage> {
                         SizedBox(height: 10),
                         // User's name
                         Text(
-                          'User Name', // Replace with user's name
+                          widget.name, // Replace with user's name
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
