@@ -1,8 +1,16 @@
-import 'dart:async';
+ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:testapp/features/timeCapsuleScreen.dart';  // Import the TimeCapsuleScreen
 import 'package:testapp/features/eventPlanningPage.dart';
 import 'package:testapp/features/Document store/document_storage_page.dart';
+
+
+import '../authentications/loginScreen.dart';
+import 'Drawer/about.dart';
+import 'Drawer/changePassword.dart';
+import 'Drawer/editProfile.dart';
+import 'Drawer/privacyPolicy.dart';
+import 'Drawer/termsAndConditions.dart';
 
 class mainHomepage extends StatefulWidget {
   final String groupName;
@@ -94,39 +102,186 @@ class _MainHomepageState extends State<mainHomepage> {
           ),
         ],
       ),
+
+
       drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
+        backgroundColor: Colors.white,
+        child: Column(
           children: [
-            DrawerHeader(
+            // Top Profile Info Section
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(40.0), // Adjusted padding for better proportions
               decoration: BoxDecoration(
-                color: Colors.teal,
+                color: Colors.teal, // Background color for the profile section
               ),
-              child: Text(
-                'Menu',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
+              child: Stack(
+                children: [
+                  // Profile Info centered
+                  Align(
+                    alignment: Alignment.center,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min, // Ensures only the content height is considered
+                      children: [
+                        // Circular user image
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundImage: AssetImage('assets/user_image.png'), // Replace with user image asset or network URL
+                          backgroundColor: Colors.black12, // Optional: Background color for avatar
+                        ),
+                        SizedBox(height: 10),
+                        // User's name
+                        Text(
+                          'User Name', // Replace with user's name
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Edit button in the top-right corner with circular white background
+                  Positioned(
+                    top: 0, // Adjust spacing from the top
+                    right: 0, // Adjust spacing from the right
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white, // White background for the circle
+                        shape: BoxShape.circle, // Makes the container circular
+                      ),
+                      child: IconButton(
+                        icon: Icon(Icons.edit, color: Colors.black), // Black pen icon
+                        onPressed: () {
+                          // Navigate to edit profile page
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => EditProfileScreen()),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            ListTile(
-              leading: Icon(Icons.home),
-              title: Text('Home'),
-              onTap: () {
-                Navigator.pop(context);
-              },
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _buildShadowedTile(
+                    icon: Icons.home,
+                    text: 'Home',
+                    onTap: () => Navigator.pop(context),
+                    iconColor: Colors.teal, // Set icon color to blue
+                  ),
+                  _buildShadowedTile(
+                    icon: Icons.lock_outlined,
+                    text: 'Change Password',
+                    onTap: () {
+                      // Handle navigation
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChangePasswordScreen(),
+                        ),
+                      );
+                    },
+                    iconColor: Colors.teal, // Set icon color to blue
+                  ),
+
+                  _buildShadowedTile(
+                    icon: Icons.dark_mode,
+                    text: 'Dark Mode',
+                    onTap: () {
+                      // Handle navigation
+
+                    },
+                    iconColor: Colors.teal, // Set icon color to blue
+                  ),
+
+                  _buildShadowedTile(
+                    icon: Icons.check_box,
+                    text: 'Terms and Conditions',
+                    onTap: () {
+                      // Handle navigation
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => TermsAndConditions()),
+                      );
+                    },
+                    iconColor: Colors.teal, // Set icon color to blue
+                  ),
+
+
+                  _buildShadowedTile(
+                    icon: Icons.policy,
+                    text: 'Privacy Policy',
+                    onTap: () {
+                      // Handle navigation
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Privacy()),
+                      );
+                    },
+                    iconColor: Colors.teal, // Set icon color to blue
+                  ),
+
+                  _buildShadowedTile(
+                    icon: Icons.info_outline,
+                    text: 'About',
+                    onTap: () {
+                      // Handle navigation
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => About()),
+                      );
+                    },
+                    iconColor: Colors.teal, // Set icon color to blue
+                  ),
+                  _buildShadowedTile(
+                    icon: Icons.logout,
+                    text: 'Log Out',
+                    onTap: () {
+                      // Perform logout actions, like clearing user data
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => loginScreen()),
+                      );
+                    },
+                    iconColor: Colors.teal,
+                  ),
+                ],
+              ),
             ),
-            ListTile(
-              leading: Icon(Icons.group),
-              title: Text('Groups'),
-              onTap: () {
-                // Handle navigation
-              },
+            // FemNest and quote at the bottom
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16.0),
+              child: Column(
+                children: [
+                  Text(
+                    'FamNest',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.teal,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Familyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       ),
+
       body: Column(
         children: [
           // Slideshow Section
@@ -195,7 +350,7 @@ class _MainHomepageState extends State<mainHomepage> {
                       // Navigate to TimeCapsuleScreen when the "Document Storage" grid item is tapped
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) =>documentStoragePage()),
+                        MaterialPageRoute(builder: (context) => documentStoragePage()),
                       );
                     }
                     if(index == 2){
@@ -289,10 +444,48 @@ class _MainHomepageState extends State<mainHomepage> {
             label: 'Groups',
           ),
         ],
-        selectedItemColor: Colors.teal[800],
-        unselectedItemColor: Colors.teal[400],
-        backgroundColor: Colors.white,
-        showUnselectedLabels: true,
+      ),
+    );
+  }
+
+  Widget _buildShadowedTile({
+    required IconData icon,
+    required String text,
+    required Function() onTap,
+    required Color iconColor, // Correctly use iconColor parameter
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(6),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              const SizedBox(width: 18),
+              Icon(icon, color: iconColor),  // Use iconColor for the icon color
+              const SizedBox(width: 16),
+              Text(
+                text,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
