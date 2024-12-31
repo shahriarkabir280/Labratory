@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:testapp/features/splashScreen.dart';
+import 'package:provider/provider.dart';
 import 'package:testapp/authentications/loginScreen.dart';
-//import 'package:testapp/document_storage_page.dart';
+import 'package:testapp/Models/DataModel.dart';
+import 'package:testapp/features/splashScreen.dart';
+
+
 
 
 
@@ -9,22 +12,26 @@ void main(){
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget{
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      initialRoute: '/',
-      routes: {
-        '/':(context)=> splashScreen(),
-        '/home': (context) => loginScreen(),// Replace HomeScreen with your main screen
-      },
+    return ChangeNotifierProvider(
+      create: (_) => DataModel(),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        initialRoute: '/',
+        routes: {
+          '/': (context) =>splashScreen(),
+          '/home':(context)=>loginScreen(),
+        },
+      ),
     );
   }
-
 }
+
+
+
 
 

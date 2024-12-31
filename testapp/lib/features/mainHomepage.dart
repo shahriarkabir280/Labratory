@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:testapp/features/timeCapsuleScreen.dart';  // Import the TimeCapsuleScreen
 import 'package:testapp/features/eventPlanningPage.dart';
 import 'package:testapp/features/Document store/document_storage_page.dart';
+import 'package:testapp/features/Expense Tracking/expenseTrackingScreen.dart';
 
 
 import '../authentications/loginScreen.dart';
@@ -18,6 +19,7 @@ class mainHomepage extends StatefulWidget {
   final String password;
   final String email;
   mainHomepage({required this.email,required this.name,required this.password,required this.groupName});
+
 
   @override
   _MainHomepageState createState() => _MainHomepageState();
@@ -348,6 +350,13 @@ class _MainHomepageState extends State<mainHomepage> {
               itemBuilder: (context, index) {
                 return GestureDetector(
                   onTap: () {
+                    if(index == 0){
+                      // Navigate to TimeCapsuleScreen when the "Document Storage" grid item is tapped
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ExpenseTrackingScreen()),
+                      );
+                    }
                     if(index == 1){
                       // Navigate to TimeCapsuleScreen when the "Document Storage" grid item is tapped
                       Navigator.push(
