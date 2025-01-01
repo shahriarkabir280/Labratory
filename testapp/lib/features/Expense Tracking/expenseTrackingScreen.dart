@@ -20,9 +20,11 @@ class ExpenseTrackingScreen extends StatelessWidget {
 
     // Calculate dynamic values
     final budgets = dataModel.budgets;
+    final totalBudget = dataModel.getTotalBudget();
     final expenses = dataModel.expenses;
-    double totalBudget = budgets.fold(0.0, (sum, b) => sum + b['amount']);
-    double totalSpent = budgets.fold(0.0, (sum, b) => sum + b['spent']);
+    final totalSpent = dataModel.getTotalExpenses();
+   // double totalBudget = budgets.fold(0.0, (sum, b) => sum + b['amount']);
+   // double totalSpent = budgets.fold(0.0, (sum, b) => sum + b['spent']);
     double remaining = totalBudget - totalSpent;
 
     return Scaffold(
@@ -163,9 +165,7 @@ class ExpenseTrackingScreen extends StatelessWidget {
           ] else ...[
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: ExpensePieChart(
-                dataModel: dataModel,
-              ),
+              child: ExpensePieChart(),
             ),
             Expanded(
               child: CategoryDescriptionList(
