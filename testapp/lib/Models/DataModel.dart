@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
 
 class DataModel extends ChangeNotifier {
   final List<Map<String, dynamic>> budgets = [];
@@ -92,4 +94,33 @@ class DataModel extends ChangeNotifier {
       return expenseDate.month == month.month && expenseDate.year == month.year;
     }).toList();
   }
+
+  Map<String, double> getCategoryWiseExpensesForCurrentMonth() {
+    final now = DateTime.now();
+
+    // Filter expenses for the current month
+    final currentMonthExpenses = expenses.where((expense) {
+      final date = expense['date'];
+      return date.month == now.month && date.year == now.year;
+    });
+
+    // Group expenses by category and sum their amounts
+    Map<String, double> categoryWiseExpenses = {};
+    for (var expense in currentMonthExpenses) {
+      final category = expense['category'];
+      final amount = expense['amount'] ?? 0.0;
+
+      if (categoryWiseExpenses.containsKey(category)) {
+        categoryWiseExpenses[category] = categoryWiseExpenses[category]! + amount;
+      } else {
+        categoryWiseExpenses[category] = amount;
+      }
+    }
+
+    return categoryWiseExpenses;
+  }
+
+
 }
+
+
