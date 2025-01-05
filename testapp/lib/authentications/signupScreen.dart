@@ -4,47 +4,19 @@ import 'package:testapp/authentications/validator.dart'; // Import the validator
 import 'package:testapp/authentications/termsofServicesandPrivacyPolicy.dart';
 import 'package:testapp/authentications/loginScreen.dart';
 import 'package:testapp/backend_connections/FASTAPI.dart';
-final FASTAPIhere FastAPIonthego = FASTAPIhere();
 
-class signupScreen extends StatefulWidget {
+final FASTAPI fastAPI = FASTAPI(); // Use the FASTAPI abstraction for backend calls
+
+class signUpScreen extends StatefulWidget {
   @override
   _SignupScreenState createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<signupScreen> {
+class _SignupScreenState extends State<signUpScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  // fastapi ke msg pathacchi
-  // Future<void> sendDataTofastAPI(String email, String pass) async {
-  //   final String url = 'http://10.0.2.2:8000/save-input/'; // default android emu url diye connect hocchi
-  //
-  //   final response = await http.post(
-  //     Uri.parse(url),
-  //     headers: {'Content-Type': 'application/json'},
-  //     body: json.encode({"email": email, "password":pass}),
-  //   );
-  //
-  //   if (response.statusCode == 200) {
-  //     final responseData = json.decode(response.body);
-  //
-  //     // Show message from the response
-  //     if(responseData['message']=="Successfully Registered")
-  //     {ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text(responseData['message']),backgroundColor: Colors.lightGreen),
-  //     );}
-  //     else {
-  //       ScaffoldMessenger.of(context).showSnackBar(
-  //         SnackBar(content: Text(responseData['message']),backgroundColor: Colors.redAccent),
-  //       );
-  //     }
-  //   } else {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text('Failed to save data')),
-  //     );
-  //   }
-  // }
   bool _isChecked = false;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
@@ -60,19 +32,17 @@ class _SignupScreenState extends State<signupScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 50),
-              // Circular Image Decoration
               ClipOval(
                 child: SizedBox(
                   width: 150,
                   height: 150,
                   child: Image.asset(
-                    'assets/authentications/test.png', // Replace with your SVG or image path
+                    'assets/authentications/test.png', // Replace with your image path
                     fit: BoxFit.cover,
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              // Page Title
               Text(
                 "Create Your Account",
                 style: TextStyle(
@@ -88,7 +58,6 @@ class _SignupScreenState extends State<signupScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 30),
-              // Input Fields
               _buildTextField(
                 controller: _nameController,
                 label: "Name",
@@ -115,7 +84,6 @@ class _SignupScreenState extends State<signupScreen> {
                 isPassword: true,
               ),
               const SizedBox(height: 20),
-              // Terms and Conditions
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -142,7 +110,6 @@ class _SignupScreenState extends State<signupScreen> {
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                //Validators.showSnackBar(context, "Navigate to Terms of Services");
                                 termsOfServicesAndPrivacyPolicy.showTermsOfServices(context);
                               },
                           ),
@@ -156,7 +123,6 @@ class _SignupScreenState extends State<signupScreen> {
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                //Validators.showSnackBar(context, "Navigate to Privacy Policy");
                                 termsOfServicesAndPrivacyPolicy.showPrivacyPolicy(context);
                               },
                           ),
@@ -168,20 +134,18 @@ class _SignupScreenState extends State<signupScreen> {
                 ],
               ),
               const SizedBox(height: 20),
-              // Sign-Up Button
               ElevatedButton(
-                onPressed: () {
-                  final nothavingName=Validators.validateFullName(_nameController.text);
+                onPressed: () async {
+                  final notHavingName = Validators.validateFullName(_nameController.text);
                   final emailError = Validators.validateEmail(_emailController.text);
                   final passwordError = Validators.validatePassword(_passwordController.text);
                   final confirmPasswordError = Validators.validateConfirmPassword(
                     _passwordController.text,
                     _confirmPasswordController.text,
                   );
-                  final inputText = _nameController.text;
 
-                  if(nothavingName!=null){
-                    Validators.showSnackBar(context, nothavingName);
+                  if (notHavingName != null) {
+                    Validators.showSnackBar(context, notHavingName);
                     return;
                   }
 
@@ -205,17 +169,26 @@ class _SignupScreenState extends State<signupScreen> {
                     return;
                   }
 
-                  if (_emailController.text.isNotEmpty) {
-                    FastAPIonthego.user_register(context,_nameController.text, _emailController.text , _passwordController.text);// Send the input text to the FastAPI backend
-                    } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Please enter Username')),
+                  try {
+                    await fastAPI.registerUser(
+                      context,
+                      _nameController.text,
+                      _emailController.text,
+                      _passwordController.text,
                     );
+                    Validators.showSnackBar(
+                      context,
+                      "Successfully registered",
+                      backgroundColor: Colors.lightGreen,
+                    );
+
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => loginScreen()),
+                    );
+                  } catch (e) {
+                    Validators.showSnackBar(context, "Error: $e");
                   }
-
-                  //all ok
-                  // Validators.showSnackBar(context, "Successfully registered", backgroundColor: Colors.lightGreen);
-
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal[700],
@@ -230,7 +203,6 @@ class _SignupScreenState extends State<signupScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              // Already Have an Account
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -240,15 +212,18 @@ class _SignupScreenState extends State<signupScreen> {
                   ),
                   TextButton(
                     onPressed: () {
-                      // Navigate to Sign-In Page
                       Navigator.pushReplacement(
                         context,
-                      MaterialPageRoute(builder: (context)=>loginScreen()),
+                        MaterialPageRoute(builder: (context) => loginScreen()),
                       );
                     },
                     child: Text(
-                      "login",
-                      style: TextStyle(fontSize: 16, color: Colors.teal[700], fontWeight: FontWeight.bold),
+                      "Login",
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.teal[700],
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -260,7 +235,6 @@ class _SignupScreenState extends State<signupScreen> {
     );
   }
 
-  // Helper Widget for Text Fields
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -284,12 +258,10 @@ class _SignupScreenState extends State<signupScreen> {
           borderSide: BorderSide(color: Colors.teal[300]!),
           borderRadius: BorderRadius.circular(10),
         ),
-
       ),
     );
   }
 
-  // helper widget for password text field
   Widget _buildTextField1({
     required TextEditingController controller,
     required String label,
@@ -330,7 +302,6 @@ class _SignupScreenState extends State<signupScreen> {
     );
   }
 
-  //helper text field for confirm password field
   Widget _buildTextField2({
     required TextEditingController controller,
     required String label,

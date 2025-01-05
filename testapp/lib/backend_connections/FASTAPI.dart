@@ -1,69 +1,57 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:testapp/backend_connections/api services/authentications/authentication.dart';
 
-import 'package:testapp/backend_connections/api%20services/all_groups_info.dart';
-import 'package:testapp/backend_connections/api%20services/checking_one_group_condition.dart';
-import 'package:testapp/backend_connections/api%20services/user_join_group.dart';
-import 'package:testapp/backend_connections/api%20services/user_registration.dart';
-import 'package:testapp/backend_connections/api%20services/user_login_check.dart';
-import 'package:testapp/backend_connections/api%20services/user_create_group.dart';
-
-import 'api services/get_first_group.dart';
-import 'api services/get_name.dart';
-import 'api services/get_password.dart';
-
-
-// fastapi ke msg pathacchi
-class FASTAPIhere{
-
-  // for user registration
-  Future<void> user_register(
-      BuildContext context, String name, String email, String pass) async {
-    await user_registration(context, name, email, pass);
+class FASTAPI {
+  // For user registration
+  Future<Map<String, dynamic>> registerUser(
+      BuildContext context, String name, String email, String password) async {
+    return await BackendService.registerUser(name, email, password);
   }
 
-  // for user login
-  Future<bool> login_check(
-      BuildContext context, String email, String pass) async {
-    return await user_login_check(context, email, pass);
+  // For user login
+  Future<Map<String, dynamic>> loginUser(
+      BuildContext context, String email, String password) async {
+    return await BackendService.loginUser(email, password);
   }
 
-  // for creating a group
-  Future<void> group_create(
-      BuildContext context,String email, String newgroup , String groupcode) async {
-      await user_group_create(context, email, newgroup, groupcode);
+  // For user logout
+  Future<Map<String, dynamic>> logoutUser(
+      BuildContext context, String email) async {
+    return await BackendService.logoutUser(email);
   }
 
-  // for checking at least one group criteria
-  Future<bool> check_one_group_criteria(BuildContext context, String email) async {
-    return await checking_one_group_condition(context, email);
+  // For creating a group
+  Future<Map<String, dynamic>> createGroup(BuildContext context, String email,
+      String groupName, String groupCode) async {
+    return await BackendService.createGroup(email, groupName, groupCode);
   }
 
-  // all groups record
-  Future<void> all_groups(
-      BuildContext context,String g_name, String g_pass) async {
-      await all_groups_info(context, g_name, g_pass);
+  // For finding a group
+  Future<Map<String, dynamic>> findGroup(
+      BuildContext context, String groupCode) async {
+    return await BackendService.findGroup(groupCode);
   }
 
-  // for joining group
-  Future<String> find_group(BuildContext context, String groupCode) async {
-    return await finding_group(context, groupCode);
+  // For fetching user data
+  Future<Map<String, dynamic>> getUserData(BuildContext context, String email) async {
+    return await BackendService.getUserData(email);
   }
 
-  // find name
-  Future<String> find_name(BuildContext context, String email) async {
-    return await get_name(context, email);
+
+  // For forgot password functionality
+  Future<Map<String, dynamic>> forgotPassword(
+      BuildContext context, String email) async {
+    return await BackendService.forgotPassword(email);
   }
 
-  // find password
-  Future<String> find_password(BuildContext context, String email) async {
-    return await get_password(context, email);
+  // For resetting the password
+  Future<Map<String, dynamic>> resetPassword(BuildContext context, String email,
+      String newPassword) async {
+    return await BackendService.resetPassword(email, newPassword);
   }
 
-  // find first group
-  Future<String> find_first_group(BuildContext context, String email) async {
-    return await get_first_group(context, email);
+  // For fetching all users
+  Future<List<dynamic>> getAllUsers(BuildContext context) async {
+    return await BackendService.getAllUsers();
   }
-
 }

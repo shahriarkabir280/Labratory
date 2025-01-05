@@ -1,29 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:testapp/authentications/PasswordGenerator.dart';
-import 'package:testapp/authentications/loginScreen.dart';
-import 'package:testapp/features/mainHomepage.dart';
+import 'package:provider/provider.dart';
+import '../backend_connections/FASTAPI.dart';
+import '../Models/UserState.dart';
+import '../features/mainHomepage.dart';
+import '../authentications/loginScreen.dart';
+import '../authentications/PasswordGenerator.dart';
 
-import 'package:testapp/backend_connections/FASTAPI.dart';
-
-final FASTAPIhere FastAPIonthego = FASTAPIhere();
-
-class createOrJoinGroup extends StatefulWidget {
-  final String email;
-
-  createOrJoinGroup({required this.email});
-
+class CreateOrJoinGroup extends StatefulWidget {
   @override
   _CreateOrJoinGroupState createState() => _CreateOrJoinGroupState();
 }
 
-class _CreateOrJoinGroupState extends State<createOrJoinGroup> {
+class _CreateOrJoinGroupState extends State<CreateOrJoinGroup> {
   final _groupNameController = TextEditingController();
   final _groupCodeController = TextEditingController();
+  final FASTAPI fastAPI = FASTAPI();
 
   bool _isJoiningGroup = false;
 
   @override
   Widget build(BuildContext context) {
+    final userState = Provider.of<UserState>(context, listen: false);
+    final email = userState.currentUser?.email ?? '';
+
     return Scaffold(
       backgroundColor: Colors.teal[50],
       body: SingleChildScrollView(
@@ -33,7 +32,6 @@ class _CreateOrJoinGroupState extends State<createOrJoinGroup> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 50),
-              // Banner Section
               Container(
                 width: double.infinity,
                 height: 200,
@@ -47,7 +45,6 @@ class _CreateOrJoinGroupState extends State<createOrJoinGroup> {
                 ),
               ),
               const SizedBox(height: 30),
-              // Heading
               Text(
                 "Create or Join Your First Group",
                 style: TextStyle(
@@ -57,7 +54,6 @@ class _CreateOrJoinGroupState extends State<createOrJoinGroup> {
                 ),
               ),
               const SizedBox(height: 15),
-              // Group Name Input Field
               if (!_isJoiningGroup)
                 Column(
                   children: [
@@ -138,11 +134,9 @@ class _CreateOrJoinGroupState extends State<createOrJoinGroup> {
                 ),
               ],
               const SizedBox(height: 30),
-              // Cancel and Done Buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // Cancel Button
                   ElevatedButton(
                     onPressed: () {
                       Navigator.pushReplacement(
@@ -161,142 +155,133 @@ class _CreateOrJoinGroupState extends State<createOrJoinGroup> {
                     child: const Text(
                       "Cancel",
                       style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
-                  // Done Button
                   ElevatedButton(
                     onPressed: () async {
-                      // Validation Logic for Group Name
                       String groupName = _groupNameController.text.trim();
                       String groupCode = _groupCodeController.text.trim();
-                      if (groupCode.isEmpty && groupName.isEmpty) {
+
+                      if (groupName.isEmpty && groupCode.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              "Input field can not be empty",
+                              "Input field cannot be empty",
                               style: TextStyle(color: Colors.white),
                             ),
                             backgroundColor: Colors.redAccent,
                           ),
                         );
-                      } else if ((groupName.isEmpty || groupName.length < 4) &&
-                          groupCode.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              "Group Name must be at least 4 characters",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            backgroundColor: Colors.redAccent,
-                          ),
-                        );
-                      } else if (groupCode.isNotEmpty) {
-                        String grp =
-                            await FastAPIonthego.find_group(context, groupCode);
-                        if (grp !=  "-1") {
-                          FastAPIonthego.group_create(
-                              context, widget.email, grp, groupCode);
+                        return;
+                      }
+
+                      if (groupCode.isNotEmpty) {
+                        try {
+                          final groupData = await fastAPI.findGroup(context, groupCode);
+                          if (groupData.isNotEmpty) {
+                            userState.currentUser?.groups.add(
+                              Group(
+                                groupName: groupData['group_name'],
+                                groupCode: groupCode,
+                              ),
+                            );
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Joined Group Successfully"),
+                                backgroundColor: Colors.lightGreen,
+                              ),
+                            );
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (context) => mainHomepage()),
+                            );
+                          } else {
+                            throw Exception("Group not found");
+                          }
+                        } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(
-                                "Joined Group Successfully",
-                                style: TextStyle(color: Colors.white),
-                              ),
-                              backgroundColor: Colors.lightGreen,
-                            ),
-                          );
-                          String name = await FastAPIonthego.find_name(context, widget.email);
-                          String password = await FastAPIonthego.find_password(context, widget.email);
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  mainHomepage(email: widget.email, name: name , password: password, groupName: grp),
-                            ),
-                          );
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                "Invalid Group Code",
-                                style: TextStyle(color: Colors.white),
-                              ),
+                              content: Text("Invalid Group Code"),
                               backgroundColor: Colors.redAccent,
                             ),
                           );
                         }
-                      } else {
-                        String password =
-                            generatePassword(); // generating random password
-                        FastAPIonthego.all_groups(context, groupName, password);
-                        FastAPIonthego.group_create(context, widget.email,
-                            _groupNameController.text, password);
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: Text(
-                                "Group Password",
-                                style: TextStyle(
-                                    fontSize: 22, fontWeight: FontWeight.bold),
+                      } else if (groupName.isNotEmpty) {
+                        if (groupName.length < 4) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Group Name must be at least 4 characters"),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                          return;
+                        }
+
+                        try {
+                          String password = generatePassword();
+                          final response = await fastAPI.createGroup(context, email, groupName, password);
+
+                          if (response['success'] == true) {
+                            final groupData = response['group'];
+                            userState.currentUser?.groups.add(
+                              Group(
+                                groupName: groupData['group_name'],
+                                groupCode: groupData['group_code'],
+                                createdAt: groupData['created_at'],
                               ),
-                              content: RichText(
-                                text: TextSpan(
-                                  style: TextStyle(
-                                      color: Colors.black, fontSize: 17),
-                                  // Default style
-                                  children: [
-                                    TextSpan(
-                                        text: "Your Group Password is: \n\n"),
-                                    TextSpan(
-                                      text: password,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.blueGrey,
-                                        fontSize: 20,
-                                      ),
+                            );
+
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: Text("Group Password"),
+                                  content: RichText(
+                                    text: TextSpan(
+                                      style: TextStyle(color: Colors.black, fontSize: 17),
+                                      children: [
+                                        TextSpan(text: "Your Group Password is: \n\n"),
+                                        TextSpan(
+                                          text: password,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.blueGrey,
+                                            fontSize: 20,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop(); // Close the dialog
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(builder: (context) => mainHomepage()),
+                                        );
+                                      },
+                                      child: Text("OK"),
                                     ),
                                   ],
-                                ),
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () async{
-                                    String name = await FastAPIonthego.find_name(context, widget.email);
-                                    String password = await FastAPIonthego.find_password(context, widget.email);
-
-                                    Navigator.of(context)
-                                        .pop(); // Close the dialog
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            mainHomepage(email: widget.email, name: name , password: password, groupName: groupName),
-                                      ),
-                                    );
-                                  },
-                                  child: Text("OK",
-                                      style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold)),
-                                ),
-                              ],
+                                );
+                              },
                             );
-                          },
-                        );
-                        ;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              "Group Created Successfully",
-                              style: TextStyle(color: Colors.white),
+                          } else {
+                            throw Exception("Failed to create group");
+                          }
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Failed to create group: $e"),
+                              backgroundColor: Colors.redAccent,
                             ),
-                            backgroundColor: Colors.lightGreen,
-                          ),
-                        );
+                          );
+                        }
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -310,9 +295,10 @@ class _CreateOrJoinGroupState extends State<createOrJoinGroup> {
                     child: const Text(
                       "Done",
                       style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -324,7 +310,6 @@ class _CreateOrJoinGroupState extends State<createOrJoinGroup> {
     );
   }
 
-  // Helper Widget for Text Fields
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
