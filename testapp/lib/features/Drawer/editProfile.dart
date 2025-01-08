@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import 'package:testapp/authentications/validator.dart';
+import 'package:testapp/Models/UserState.dart';
+import 'package:testapp/backend_connections/FASTAPI.dart';
 import 'dart:io';
+
+final FASTAPI fastAPI = FASTAPI(); // Use the FASTAPI abstraction for backend calls
 
 class EditProfileScreen extends StatefulWidget {
   @override
@@ -11,16 +17,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   String _name = '';
   String _email = '';
-  String _birthDate = '';
   File? _image;
 
   // Controllers to manage form fields
   TextEditingController _nameController = TextEditingController();
   TextEditingController _emailController = TextEditingController();
-  TextEditingController _birthDateController = TextEditingController();
-
-  // List to store dynamic fields and their controllers
-  List<Map<String, dynamic>> _additionalFields = [];
 
   // Function to pick an image (camera or gallery)
   Future<void> _pickImage(ImageSource source) async {
@@ -65,92 +66,42 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       },
     );
   }
-
-  Future<void> _selectBirthDate() async {
-    DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
+  void _updateUserInfo(UserState userState , String name , String email) {
+    final updatedUser = User(
+      name: name, // New name entered by the user
+      email: email, // New email entered by the user
+      password: userState.currentUser?.password ?? '', // Keep the old password (since we didn't update it)
+      groups: userState.currentUser?.groups ?? [], // Keep the same groups (if they were not updated)
+      loginStatus: userState.currentUser?.loginStatus ?? false, // Keep the same login status
+      createdAt: userState.currentUser?.createdAt ?? '', // Keep the same created date
     );
-    if (pickedDate != null) {
-      setState(() {
-        _birthDate = "${pickedDate.day}/${pickedDate.month}/${pickedDate.year}";
-        _birthDateController.text = _birthDate;
-      });
-    }
-  }
 
-  void _showAddMoreOptionsDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Add More Options"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: Icon(Icons.phone),
-                title: Text("Phone"),
-                onTap: () {
-                  Navigator.pop(context);
-                  _addAdditionalField("Phone");
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.home),
-                title: Text("Address"),
-                onTap: () {
-                  Navigator.pop(context);
-                  _addAdditionalField("Address");
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.note),
-                title: Text("Others"),
-                onTap: () {
-                  Navigator.pop(context);
-                  _addAdditionalField("Others");
-                },
-              ),
-            ],
-          ),
-        );
-      },
+    // Now update the UserState with the new User object
+    userState.updateUser(updatedUser);
+  }
+  void _showSnackbar(String message, Color color) {
+    final snackBar = SnackBar(
+      content: Text(message),
+      backgroundColor: color,
+      duration: Duration(seconds: 2),
     );
-  }
-
-  void _addAdditionalField(String fieldName) {
-    setState(() {
-      _additionalFields.add({
-        "field": fieldName,
-        "controller": TextEditingController(),
-      });
-    });
-  }
-
-  void _deleteAdditionalField(int index) {
-    setState(() {
-      _additionalFields[index]["controller"].dispose();
-      _additionalFields.removeAt(index);
-    });
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   @override
   void dispose() {
-    // Dispose of all controllers to avoid memory leaks
+    // Dispose of controllers to avoid memory leaks
     _nameController.dispose();
     _emailController.dispose();
-    _birthDateController.dispose();
-    for (var field in _additionalFields) {
-      field["controller"].dispose();
-    }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final userState = Provider.of<UserState>(context, listen: true);
+    // Accessing the email and name of the current user
+    final old_email = userState.currentUser?.email ?? 'No Email';
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Edit My Profile'),
@@ -187,84 +138,82 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ],
                 ),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 30),
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
-                  hintText: 'Enter your name',
+                  hintText: 'Enter new name',
                   labelText: 'Name',
                   prefixIcon: Icon(Icons.person),
                 ),
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Please enter your name'
+                    : null,
                 onChanged: (value) => setState(() => _name = value),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 30),
               TextFormField(
                 controller: _emailController,
                 decoration: InputDecoration(
-                  hintText: 'Enter your email',
+                  hintText: 'Enter new email',
                   labelText: 'Email',
                   prefixIcon: Icon(Icons.email),
                 ),
                 keyboardType: TextInputType.emailAddress,
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Please enter your email'
+                    : null,
                 onChanged: (value) => setState(() => _email = value),
               ),
-              SizedBox(height: 20),
-              TextField(
-                controller: _birthDateController,
-                decoration: InputDecoration(
-                  hintText: 'Pick your birth date',
-                  labelText: 'Birth Date',
-                  prefixIcon: Icon(Icons.calendar_today),
-                ),
-                readOnly: true,
-                onTap: _selectBirthDate,
-              ),
-              SizedBox(height: 20),
-              GestureDetector(
-                onTap: _showAddMoreOptionsDialog,
-                child: Text('Add More Options', style: TextStyle(color: Colors.blue, fontSize: 16)),
-              ),
-              SizedBox(height: 20),
-              for (int i = 0; i < _additionalFields.length; i++) ...[
-                Row(
-                  children: [
-                    Icon(
-                      _additionalFields[i]["field"] == "Phone"
-                          ? Icons.phone
-                          : _additionalFields[i]["field"] == "Address"
-                          ? Icons.home
-                          : Icons.note,
-                    ),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        controller: _additionalFields[i]["controller"],
-                        decoration: InputDecoration(
-                          hintText: 'Enter your ${_additionalFields[i]["field"]}',
-                        ),
+              SizedBox(height: 60),
+              Center(
+                child: SizedBox(
+                  width: 200, // Adjust the width as needed
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      final emailError = Validators.validateEmail(_emailController.text);
+                      if (emailError != null) {
+                        Validators.showSnackBar(context, emailError);
+                        return;
+                      }
+                      if (_formKey.currentState!.validate()) {
+                        print("Name: $_name");
+                        print("Email: $_email");
+                        try {
+                          await fastAPI.editUserProfile(
+                            context,
+                            _nameController.text,
+                            _emailController.text,
+                            old_email
+                          );
+                          _showSnackbar("Your Profile is Updated Successfully!!", Colors.green);
+                          // Update the current user in UserState
+                          _updateUserInfo(userState, _name, _email); // This updates the currentUser in UserState
+                          // navigator
+                          Future.delayed(Duration(seconds: 2), () {
+                            Navigator.pop(context);
+                          });
+                        } catch (e) {
+                          Validators.showSnackBar(context, "Error: $e");
+                        }
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.lightGreenAccent,     // Text color on the button
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12), // Rounded corners
                       ),
                     ),
-                    IconButton(
-                      icon: Icon(Icons.close, color: Colors.red),
-                      onPressed: () => _deleteAdditionalField(i),
+                    child: Text(
+                      'Save Profile',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold, // Makes the text bold
+                      ),
                     ),
-                  ],
+                  ),
                 ),
-                Divider(),
-              ],
-              ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    print("Name: $_name");
-                    print("Email: $_email");
-                    print("Birth Date: $_birthDate");
-                    for (var field in _additionalFields) {
-                      print("${field['field']}: ${field['controller'].text}");
-                    }
-                  }
-                },
-                child: Text('Save Profile'),
               ),
+
             ],
           ),
         ),
