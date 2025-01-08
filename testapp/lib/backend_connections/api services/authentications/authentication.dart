@@ -125,14 +125,13 @@ class BackendService {
 
 
 
-  // Forgot Password
+  // Forgot Password: Send Reset Code
   static Future<Map<String, dynamic>> forgotPassword(String email) async {
     final response = await http.post(
       Uri.parse("$baseUrl/forgot-password/"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({"email": email}),
     );
-
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
@@ -140,23 +139,29 @@ class BackendService {
     }
   }
 
+
   // Reset Password
-  static Future<Map<String, dynamic>> resetPassword(String email, String newPassword) async {
+  static Future<Map<String, dynamic>> resetPassword(
+      String email,
+      String resetCode,
+      String newPassword,
+      ) async {
     final response = await http.post(
       Uri.parse("$baseUrl/reset-password/"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
         "email": email,
+        "reset_code": resetCode,
         "new_password": newPassword,
       }),
     );
-
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
       throw Exception("Password reset failed: ${response.body}");
     }
   }
+
 
   // Get All Users
   static Future<List<dynamic>> getAllUsers() async {
