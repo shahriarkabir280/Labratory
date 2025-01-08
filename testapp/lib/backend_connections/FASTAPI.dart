@@ -59,4 +59,10 @@ class FASTAPI {
   Future<List<dynamic>> getAllUsers(BuildContext context) async {
     return await BackendService.getAllUsers();
   }
+
+   // For editing profile
+  Future<Map<String, dynamic>> editUserProfile(
+      BuildContext context, String new_name, String new_email , String old_email) async {
+    return await BackendServiceEditUserProfile.editUserProfile(new_name, new_email, old_email);
+  }
 }
