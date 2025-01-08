@@ -5,6 +5,7 @@ import 'package:testapp/Models/UserState.dart';
 import 'package:testapp/features/mainHomepage.dart';
 import 'package:testapp/features/createOrJoinGroup.dart';
 import 'package:testapp/authentications/signupScreen.dart';
+import 'package:testapp/authentications/forgetPasswordScreen.dart';
 
 class loginScreen extends StatefulWidget {
   @override
@@ -66,10 +67,13 @@ class _LoginScreenState extends State<loginScreen> {
               ),
               const SizedBox(height: 20),
               Align(
-                alignment: Alignment.centerRight,
+                alignment: Alignment.centerLeft,
                 child: TextButton(
                   onPressed: () {
-                    print("Navigate to Forgot Password");
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ForgotPasswordScreen()),
+                    );
                   },
                   child: Text(
                     "Forgot Password?",
