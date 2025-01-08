@@ -38,16 +38,21 @@ class FASTAPI {
   }
 
 
-  // For forgot password functionality
-  Future<Map<String, dynamic>> forgotPassword(
+// Forgot Password: Send Reset Code
+  Future<Map<String, dynamic>> sendResetCode(
       BuildContext context, String email) async {
     return await BackendService.forgotPassword(email);
   }
 
-  // For resetting the password
-  Future<Map<String, dynamic>> resetPassword(BuildContext context, String email,
-      String newPassword) async {
-    return await BackendService.resetPassword(email, newPassword);
+
+  // Reset Password
+  Future<Map<String, dynamic>> resetPassword(
+      BuildContext context,
+      String email,
+      String resetCode,
+      String newPassword,
+      ) async {
+    return await BackendService.resetPassword(email, resetCode, newPassword);
   }
 
   // For fetching all users
