@@ -14,13 +14,13 @@ class Validators {
     if (email == null || email.isEmpty) {
       return 'Email is required';
     }
-    // Regex to ensure email has at least one character before '@gmail.com'
-    final emailRegex = RegExp(r'^[^\s@]+@gmail\.com$');
+    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
     if (!emailRegex.hasMatch(email)) {
-      return 'Enter a valid Gmail address';
+      return 'Enter a valid email';
     }
-    return null; // Email is valid
+    return null;
   }
+
   // Password Validation
   static String? validatePassword(String? password) {
     if (password == null || password.isEmpty) {

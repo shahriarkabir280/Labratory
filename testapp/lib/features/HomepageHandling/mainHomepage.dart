@@ -2,28 +2,29 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:testapp/Models/UserState.dart';
-import 'package:testapp/backend_connections/FASTAPI.dart';
-import 'package:testapp/features/timeCapsuleScreen.dart';
-import 'package:testapp/features/eventPlanningPage.dart';
-import 'package:testapp/features/Document store/document_storage_page.dart';
-import 'package:testapp/features/Expense Tracking/expenseTrackingScreen.dart';
-import '../authentications/loginScreen.dart';
-import 'Drawer/about.dart';
-import 'Drawer/changePassword.dart';
-import 'Drawer/editProfile.dart';
-import 'Drawer/privacyPolicy.dart';
-import 'Drawer/termsAndConditions.dart';
+import 'package:testapp/features/TimeCapsule/timeCapsuleScreen.dart';
+import 'package:testapp/features/EventPlanning/eventPlanningPage.dart';
+import 'package:testapp/features/Document%20store/document_storage_page.dart';
+import 'package:testapp/features/Expense%20Tracking/expenseTrackingScreen.dart';
+import '../../authentications/loginScreen.dart';
+import '../Drawer/about.dart';
+import '../Drawer/changePassword.dart';
+import '../Drawer/privacyPolicy.dart';
+import '../Drawer/termsAndConditions.dart';
+import 'package:testapp/features/GroupsHandling/createandjoingroup.dart';
+import 'package:testapp/features/GroupsHandling/groupScreen.dart';
+import 'package:testapp/features/Drawer/editProfile.dart';
 
 class mainHomepage extends StatefulWidget {
   @override
   _MainHomepageState createState() => _MainHomepageState();
 }
 
+
 class _MainHomepageState extends State<mainHomepage> {
   final PageController _pageController = PageController();
   late Timer _timer;
   int _currentPage = 0;
-  int _currentIndex = 0;
 
   final List<String> _slideshowImages = [
     'assets/slideshowimages/slide1.jpg',
@@ -53,11 +54,14 @@ class _MainHomepageState extends State<mainHomepage> {
   ];
 
   final List<Color> _colors = [
-    Colors.teal[300]!,
-    Colors.teal[400]!,
-    Colors.teal[500]!,
-    Colors.teal[600]!,
+    Colors.orangeAccent,
+    Colors.lightBlueAccent,
+    Colors.pinkAccent,
+    Colors.greenAccent,
   ];
+
+  bool isCreateGroupActive = false;
+  bool isGroupsActive = false;
 
   @override
   void initState() {
@@ -87,27 +91,128 @@ class _MainHomepageState extends State<mainHomepage> {
   @override
   Widget build(BuildContext context) {
     final userState = Provider.of<UserState>(context, listen: true);
-    final groupName = userState.currentUser?.groups.isNotEmpty == true
-        ? userState.currentUser!.groups.first.groupName
-        : 'No Group';
+    final groups = userState.currentUser?.groups ?? [];
+    final currentGroup = userState.currentUser?.currentGroup;
+
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(groupName),
-        backgroundColor: Colors.teal,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.search),
-            onPressed: () {
-              // Handle search
-            },
+        centerTitle: true,
+        title: DropdownButton<Group>(
+          value: groups.contains(currentGroup) ? currentGroup : null,
+          onChanged: (Group? newGroup) {
+            if (newGroup != null) {
+              userState.updateCurrentGroup(newGroup);
+            }
+          },
+          hint: Text(
+            "Select Group",
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
-        ],
+          dropdownColor: Colors.white,
+
+
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.white,
+          ),
+          underline: SizedBox(), // Removes the default underline
+          items: groups.map<DropdownMenuItem<Group>>((Group group) {
+            return DropdownMenuItem<Group>(
+              value: group,
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.group, // Add a group icon to enhance the look
+                    size: 18,
+                    color: Colors.grey[600],
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    group.groupName,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black,
+
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+        backgroundColor: Colors.teal,
+
+
+
+
       ),
+
+
+
+
       drawer: _buildDrawer(context, userState),
+      backgroundColor: Colors.grey[100],
       body: _buildBody(),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+      floatingActionButton: Container(
+        padding: EdgeInsets.all(8.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(32.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              onPressed: () {
+                setState(() {
+                  isCreateGroupActive = !isCreateGroupActive;
+                  isGroupsActive = false;
+                });
+                // Navigate to Create Group screen
+                Navigator.push(context, MaterialPageRoute(builder: (context) =>CreateandJoinGroup()));
+              },
+              icon: Icon(
+                Icons.group_add,
+                color: isCreateGroupActive ? Colors.teal : Colors.black,
+              ),
+              tooltip: 'Create Group',
+            ),
+            SizedBox(width: 8),
+            IconButton(
+              onPressed: () {
+                setState(() {
+                  isGroupsActive = !isGroupsActive;
+                  isCreateGroupActive = false;
+                });
+                // Navigate to Groups screen
+                Navigator.push(context, MaterialPageRoute(builder: (context) => GroupsScreen()));
+              },
+              icon: Icon(
+                Icons.groups,
+                color: isGroupsActive ? Colors.teal : Colors.black,
+              ),
+              tooltip: 'Groups',
+            ),
+          ],
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
+
+
   }
 
   Widget _buildDrawer(BuildContext context, UserState userState) {
@@ -115,15 +220,17 @@ class _MainHomepageState extends State<mainHomepage> {
       backgroundColor: Colors.white,
       child: Column(
         children: [
-          _buildProfileHeader(userState),
+          _buildProfileHeader(userState,context),
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
                 _buildShadowedTile(
-                  icon: Icons.home,
-                  text: 'Home',
-                  onTap: () => Navigator.pop(context),
+                  icon: Icons.group,
+                  text: 'Groups',
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => GroupsScreen()));
+                  },
                   iconColor: Colors.teal,
                 ),
                 _buildShadowedTile(
@@ -133,12 +240,6 @@ class _MainHomepageState extends State<mainHomepage> {
                     context,
                     MaterialPageRoute(builder: (context) => ChangePasswordScreen()),
                   ),
-                  iconColor: Colors.teal,
-                ),
-                _buildShadowedTile(
-                  icon: Icons.dark_mode,
-                  text: 'Dark Mode',
-                  onTap: () {},
                   iconColor: Colors.teal,
                 ),
                 _buildShadowedTile(
@@ -189,25 +290,50 @@ class _MainHomepageState extends State<mainHomepage> {
     );
   }
 
-  Widget _buildProfileHeader(UserState userState) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(40.0),
-      decoration: BoxDecoration(color: Colors.teal),
-      child: Column(
-        children: [
-          CircleAvatar(
-            radius: 40,
-            backgroundImage: AssetImage('assets/user_image.png'),
-            backgroundColor: Colors.black12,
+  Widget _buildProfileHeader(UserState userState, BuildContext context) {
+    return Stack(
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(40.0),
+          decoration: BoxDecoration(color: Colors.teal),
+          child: Column(
+            children: [
+              CircleAvatar(
+                radius: 40,
+                backgroundImage: userState.currentUser?.profilePictureUrl != null
+                    ? NetworkImage(userState.currentUser!.profilePictureUrl!)
+                    : AssetImage('assets/default_profile_picture.png') as ImageProvider,
+                backgroundColor: Colors.black12,
+              ),
+              SizedBox(height: 10),
+              Text(
+                userState.currentUser?.name ?? 'User Name',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 10),
-          Text(
-            userState.currentUser?.name ?? 'User Name',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        Positioned(
+          top: 30, // Adjust this value to move the pen icon below the profile image
+          right: 70,
+          child: IconButton(
+            icon: Icon(Icons.edit, color: Colors.white),
+            onPressed: () {
+              // Navigate to the editProfile.dart screen
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => EditProfileScreen()),
+              );
+            },
           ),
-        ],
-      ),
+        ),
+
+      ],
     );
   }
 
@@ -284,7 +410,15 @@ class _MainHomepageState extends State<mainHomepage> {
     );
   }
 
+
   Widget _buildGrid() {
+    final List<Color> iconColors = [
+      Colors.deepOrange,
+      Colors.blue,
+      Colors.pink,
+      Colors.green,
+    ];
+
     return Expanded(
       child: GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -303,7 +437,7 @@ class _MainHomepageState extends State<mainHomepage> {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               decoration: BoxDecoration(
-                color: _colors[index],
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: [
                   BoxShadow(
@@ -317,18 +451,31 @@ class _MainHomepageState extends State<mainHomepage> {
                 padding: const EdgeInsets.all(12.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Icon(_gridIcons[index], size: 40, color: Colors.white),
-                    const SizedBox(height: 8),
+                    Icon(
+                      _gridIcons[index],
+                      size: 48,
+                      color: iconColors[index],
+                    ),
+                    const SizedBox(height: 12),
                     Text(
                       _headlines[index],
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
                     Text(
                       _descriptions[index],
-                      style: const TextStyle(fontSize: 12, color: Colors.white70),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
                     ),
                   ],
                 ),
@@ -339,6 +486,9 @@ class _MainHomepageState extends State<mainHomepage> {
       ),
     );
   }
+
+
+
 
   void _handleGridTap(int index) {
     if (index == 0) {
@@ -352,31 +502,18 @@ class _MainHomepageState extends State<mainHomepage> {
     }
   }
 
-  Widget _buildBottomNavigationBar() {
-    return BottomNavigationBar(
-      currentIndex: _currentIndex,
-      onTap: (index) {
-        setState(() {
-          _currentIndex = index;
-        });
-        if (index == 0) {
-          Navigator.pop(context);
-        }
-      },
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.add), label: 'Create Group'),
-        BottomNavigationBarItem(icon: Icon(Icons.group), label: 'Groups'),
-      ],
-    );
-  }
+
+
+
+
+
 
 
   Widget _buildShadowedTile({
     required IconData icon,
     required String text,
     required Function() onTap,
-    required Color iconColor, // Correctly use iconColor parameter
+    required Color iconColor,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
@@ -398,7 +535,7 @@ class _MainHomepageState extends State<mainHomepage> {
           child: Row(
             children: [
               const SizedBox(width: 18),
-              Icon(icon, color: iconColor),  // Use iconColor for the icon color
+              Icon(icon, color: iconColor),
               const SizedBox(width: 16),
               Text(
                 text,

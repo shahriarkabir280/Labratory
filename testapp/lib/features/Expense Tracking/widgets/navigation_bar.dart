@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:testapp/features/Expense Tracking/Budgets/budget.dart';
 import 'package:testapp/features/Expense Tracking/Expenses/expense.dart';
-import 'package:testapp/features/mainHomepage.dart';
+import 'package:testapp/features/HomepageHandling/mainHomepage.dart';
 
 class NavigationBarWidget extends StatelessWidget {
   /*final String groupName;

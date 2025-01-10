@@ -1,12 +1,14 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:testapp/authentications/validator.dart';
 import 'package:testapp/Models/UserState.dart';
 import 'package:testapp/backend_connections/FASTAPI.dart';
-import 'dart:io';
 
-final FASTAPI fastAPI = FASTAPI(); // Use the FASTAPI abstraction for backend calls
+final FASTAPI fastAPI = FASTAPI();
 
 class EditProfileScreen extends StatefulWidget {
   @override
@@ -15,18 +17,23 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  String _name = '';
-  String _email = '';
+  String _profilePictureUrl = "";
   File? _image;
-
-  // Controllers to manage form fields
   TextEditingController _nameController = TextEditingController();
   TextEditingController _emailController = TextEditingController();
 
-  // Function to pick an image (camera or gallery)
+  @override
+  void initState() {
+    super.initState();
+    final userState = Provider.of<UserState>(context, listen: false);
+    _profilePictureUrl = userState.currentUser?.profilePictureUrl ?? 'No Profile Picture';
+    _nameController.text = userState.currentUser?.name ?? '';
+    _emailController.text = userState.currentUser?.email ?? '';
+  }
+
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
+    final XFile? pickedFile = await picker.pickImage(source: source);
 
     if (pickedFile != null) {
       setState(() {
@@ -40,12 +47,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Choose Profile Picture"),
+          title: Text("Choose Profile Picture", style: TextStyle(color: Colors.teal)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.camera_alt),
+                leading: Icon(Icons.camera_alt, color: Colors.teal),
                 title: Text("Take a Picture"),
                 onTap: () {
                   Navigator.pop(context);
@@ -53,7 +60,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 },
               ),
               ListTile(
-                leading: Icon(Icons.photo_album),
+                leading: Icon(Icons.photo_album, color: Colors.teal),
                 title: Text("Choose from Gallery"),
                 onTap: () {
                   Navigator.pop(context);
@@ -66,19 +73,56 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       },
     );
   }
-  void _updateUserInfo(UserState userState , String name , String email) {
-    final updatedUser = User(
-      name: name, // New name entered by the user
-      email: email, // New email entered by the user
-      password: userState.currentUser?.password ?? '', // Keep the old password (since we didn't update it)
-      groups: userState.currentUser?.groups ?? [], // Keep the same groups (if they were not updated)
-      loginStatus: userState.currentUser?.loginStatus ?? false, // Keep the same login status
-      createdAt: userState.currentUser?.createdAt ?? '', // Keep the same created date
-    );
 
-    // Now update the UserState with the new User object
+  Future<void> _saveProfile(UserState userState) async {
+    if (!_formKey.currentState!.validate()) return;
+
+    try {
+      // Handle image upload
+      if (_image != null) {
+        Uint8List imageData = await _image!.readAsBytes();
+        var result = await fastAPI.updateProfilePicture(context, imageData);
+        setState(() {
+          _profilePictureUrl = result["profile_picture_url"];
+          _image = null;
+        });
+      }
+
+      // Update profile details in backend
+      var response = await fastAPI.editUserProfile(
+        context,
+        _nameController.text.trim(),
+        _emailController.text.trim(),
+        userState.currentUser?.email ?? '',
+        _profilePictureUrl,
+      );
+
+      print("API Response: $response");
+
+      // If successful, update the UserState
+      _updateUserInfo(userState);
+      _showSnackbar("Profile updated successfully!", Colors.green);
+
+      Future.delayed(const Duration(seconds: 2), () {
+        Navigator.pop(context);
+      });
+    } catch (e) {
+      _showSnackbar("Error: $e", Colors.red);
+    }
+  }
+
+  void _updateUserInfo(UserState userState) {
+    final updatedUser = User(
+      name: _nameController.text.trim(),
+      email: _emailController.text.trim(),
+      groups: userState.currentUser?.groups ?? [],
+      loginStatus: userState.currentUser?.loginStatus ?? false,
+      createdAt: userState.currentUser?.createdAt ?? '',
+      profilePictureUrl: _profilePictureUrl,
+    );
     userState.updateUser(updatedUser);
   }
+
   void _showSnackbar(String message, Color color) {
     final snackBar = SnackBar(
       content: Text(message),
@@ -90,7 +134,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   void dispose() {
-    // Dispose of controllers to avoid memory leaks
     _nameController.dispose();
     _emailController.dispose();
     super.dispose();
@@ -99,121 +142,100 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final userState = Provider.of<UserState>(context, listen: true);
-    // Accessing the email and name of the current user
-    final old_email = userState.currentUser?.email ?? 'No Email';
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit My Profile'),
+        title: Text('Edit Profile'),
         backgroundColor: Colors.teal,
+        elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
         child: Form(
           key: _formKey,
-          child: ListView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Center(
-                child: Stack(
-                  children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundImage: _image == null
-                          ? AssetImage('assets/user_image.png') // Placeholder
-                          : FileImage(_image!) as ImageProvider,
-                      backgroundColor: Colors.grey[300],
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: GestureDetector(
-                        onTap: _showImageSourceDialog,
-                        child: CircleAvatar(
-                          radius: 18,
-                          backgroundColor: Colors.blue,
-                          child: Icon(Icons.camera_alt, color: Colors.white, size: 18),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 30),
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  hintText: 'Enter new name',
-                  labelText: 'Name',
-                  prefixIcon: Icon(Icons.person),
-                ),
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Please enter your name'
-                    : null,
-                onChanged: (value) => setState(() => _name = value),
-              ),
-              SizedBox(height: 30),
-              TextFormField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  hintText: 'Enter new email',
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email),
-                ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) => value == null || value.isEmpty
-                    ? 'Please enter your email'
-                    : null,
-                onChanged: (value) => setState(() => _email = value),
-              ),
-              SizedBox(height: 60),
-              Center(
-                child: SizedBox(
-                  width: 200, // Adjust the width as needed
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final emailError = Validators.validateEmail(_emailController.text);
-                      if (emailError != null) {
-                        Validators.showSnackBar(context, emailError);
-                        return;
-                      }
-                      if (_formKey.currentState!.validate()) {
-                        print("Name: $_name");
-                        print("Email: $_email");
-                        try {
-                          await fastAPI.editUserProfile(
-                            context,
-                            _nameController.text,
-                            _emailController.text,
-                            old_email
-                          );
-                          _showSnackbar("Your Profile is Updated Successfully!!", Colors.green);
-                          // Update the current user in UserState
-                          _updateUserInfo(userState, _name, _email); // This updates the currentUser in UserState
-                          // navigator
-                          Future.delayed(Duration(seconds: 2), () {
-                            Navigator.pop(context);
-                          });
-                        } catch (e) {
-                          Validators.showSnackBar(context, "Error: $e");
-                        }
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.lightGreenAccent,     // Text color on the button
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12), // Rounded corners
-                      ),
-                    ),
-                    child: Text(
-                      'Save Profile',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold, // Makes the text bold
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 70,
+                    backgroundImage: _profilePictureUrl.isNotEmpty
+                        ? NetworkImage(_profilePictureUrl)
+                        : AssetImage('assets/default_profile_picture.png') as ImageProvider,
+                    backgroundColor: Colors.teal[100],
+                  ),
+                  Positioned(
+                    bottom: 10,
+                    right: 10,
+                    child: GestureDetector(
+                      onTap: _showImageSourceDialog,
+                      child: CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.teal,
+                        child: Icon(Icons.camera_alt, color: Colors.white, size: 20),
                       ),
                     ),
                   ),
+                ],
+              ),
+              SizedBox(height: 40),
+              TextFormField(
+                controller: _nameController,
+                decoration: InputDecoration(
+                  labelText: 'Name',
+                  labelStyle: TextStyle(color: Colors.teal),
+                  prefixIcon: Icon(Icons.person, color: Colors.teal),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.teal),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.teal, width: 2),
+                  ),
+                ),
+                validator: (value) =>
+                value == null || value.isEmpty ? 'Please enter your name' : null,
+              ),
+              SizedBox(height: 20),
+              TextFormField(
+                controller: _emailController,
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  labelStyle: TextStyle(color: Colors.teal),
+                  prefixIcon: Icon(Icons.email, color: Colors.teal),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.teal),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.teal, width: 2),
+                  ),
+                ),
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) =>
+                value == null || value.isEmpty ? 'Please enter your email' : null,
+              ),
+              SizedBox(height: 40),
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () => _saveProfile(userState),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: Text(
+                    'Save Changes',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
                 ),
               ),
-
             ],
           ),
         ),

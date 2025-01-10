@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:testapp/authentications/loginScreen.dart';
-import 'package:testapp/features/splashScreen.dart';
+import 'package:testapp/features/HomepageHandling/splashScreen.dart';
 import 'package:testapp/Models/DataModel.dart'; // Import UserState
 import 'package:testapp/Models/UserState.dart';
 void main() {

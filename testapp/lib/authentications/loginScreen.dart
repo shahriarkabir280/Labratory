@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:testapp/backend_connections/FASTAPI.dart';
 import 'package:testapp/Models/UserState.dart';
-import 'package:testapp/features/mainHomepage.dart';
-import 'package:testapp/features/createOrJoinGroup.dart';
+import 'package:testapp/features/HomepageHandling/mainHomepage.dart';
+import 'package:testapp/features/GroupsHandling/createOrJoinGroup.dart';
 import 'package:testapp/authentications/signupScreen.dart';
 import 'package:testapp/authentications/forgetPasswordScreen.dart';
 
@@ -196,22 +196,38 @@ class _LoginScreenState extends State<loginScreen> {
         final userData = await fastAPI.getUserData(context, email);
 
         userState.updateUser(User(
-          email: userData['email'],
           name: userData['name'],
-          password: userData['password'],
+          email: userData['email'],
+          //password: '', // Avoid storing the password locally for security
           groups: (userData['groups'] as List<dynamic>)
               .map((group) => Group.fromJson(group))
               .toList(),
+          currentGroup: userData['current_group'] != null
+              ? Group.fromJson(userData['current_group'])
+              : null,
           loginStatus: userData['login_status'],
           createdAt: userData['created_at'],
+          profilePictureUrl: userData['profile_picture_url'],
         ));
 
+
+
         if (userData['groups'] != null && userData['groups'].isNotEmpty) {
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Login Successful."),backgroundColor: Colors.lightGreen),
+          );
+
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => mainHomepage()),
           );
         } else {
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Login Successful."),backgroundColor: Colors.lightGreen),
+          );
+
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => CreateOrJoinGroup()),
@@ -224,7 +240,7 @@ class _LoginScreenState extends State<loginScreen> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
+        SnackBar(content: Text("Error: $e"),backgroundColor: Colors.redAccent),
       );
     } finally {
       setState(() {

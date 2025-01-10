@@ -171,10 +171,11 @@ class _SignupScreenState extends State<signUpScreen> {
 
                   try {
                     await fastAPI.registerUser(
-                      context,
-                      _nameController.text,
-                      _emailController.text,
-                      _passwordController.text,
+                        context,
+                        _nameController.text,
+                        _emailController.text,
+                        _passwordController.text,
+                        "https://res.cloudinary.com/dfcyfu3vb/image/upload/v1736491308/profile_pictures/af5d6e51-7d8f-43ad-b548-693768b5bcf6.png.png"
                     );
                     Validators.showSnackBar(
                       context,
