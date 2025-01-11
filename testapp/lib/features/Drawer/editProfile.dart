@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -7,6 +6,8 @@ import 'package:provider/provider.dart';
 import 'package:testapp/authentications/validator.dart';
 import 'package:testapp/Models/UserState.dart';
 import 'package:testapp/backend_connections/FASTAPI.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 final FASTAPI fastAPI = FASTAPI();
 
@@ -17,10 +18,15 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  String _profilePictureUrl = "";
-  File? _image;
-  TextEditingController _nameController = TextEditingController();
-  TextEditingController _emailController = TextEditingController();
+  String _name = '';
+  String _email = '';
+  String _profilePictureUrl = '';
+  File? _image; // For mobile
+  Uint8List? _imageBytes; // For Flutter Web
+
+  // Controllers to manage form fields
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
 
   @override
   void initState() {
@@ -30,14 +36,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController.text = userState.currentUser?.name ?? '';
     _emailController.text = userState.currentUser?.email ?? '';
   }
-
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
-    final XFile? pickedFile = await picker.pickImage(source: source);
-
+    final pickedFile = await picker.pickImage(source: source);
     if (pickedFile != null) {
       setState(() {
-        _image = File(pickedFile.path);
+        if (kIsWeb) {
+          // For web, use readAsBytes
+          pickedFile.readAsBytes().then((bytes) {
+            setState(() {
+              _imageBytes = bytes;
+            });
+          });
+        } else {
+          // For mobile, use File
+          _image = File(pickedFile.path);
+        }
       });
     }
   }
@@ -47,21 +61,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Choose Profile Picture", style: TextStyle(color: Colors.teal)),
+          title: const Text("Choose Profile Picture"),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.camera_alt, color: Colors.teal),
-                title: Text("Take a Picture"),
+                leading: const Icon(Icons.camera_alt),
+                title: const Text("Take a Picture"),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.camera);
                 },
               ),
               ListTile(
-                leading: Icon(Icons.photo_album, color: Colors.teal),
-                title: Text("Choose from Gallery"),
+                leading: const Icon(Icons.photo_album),
+                title: const Text("Choose from Gallery"),
                 onTap: () {
                   Navigator.pop(context);
                   _pickImage(ImageSource.gallery);
@@ -75,46 +89,55 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _saveProfile(UserState userState) async {
-    if (!_formKey.currentState!.validate()) return;
+    final emailError = Validators.validateEmail(_emailController.text);
+    if (emailError != null) {
+      Validators.showSnackBar(context, emailError);
+      return;
+    }
+    if (_formKey.currentState!.validate()) {
+      try {
+        // Handle image upload for web and mobile
+        if (_imageBytes != null || _image != null) {
+          Uint8List imageData;
+          if (_imageBytes != null) {
+            // Use _imageBytes for web
+            imageData = _imageBytes!;
+          } else {
+            // Convert File to Uint8List for mobile
+            imageData = await _image!.readAsBytes();
+          }
+          var result = await fastAPI.updateProfilePicture(context, imageData);
+          setState(() {
+            _profilePictureUrl = result["profile_picture_url"];
+            _imageBytes = null;
+            _image = null;
+          });
+        }
 
-    try {
-      // Handle image upload
-      if (_image != null) {
-        Uint8List imageData = await _image!.readAsBytes();
-        var result = await fastAPI.updateProfilePicture(context, imageData);
-        setState(() {
-          _profilePictureUrl = result["profile_picture_url"];
-          _image = null;
+        // Update profile details
+        await fastAPI.editUserProfile(
+          context,
+          _nameController.text,
+          _emailController.text,
+          userState.currentUser?.email ?? '',
+          _profilePictureUrl,
+        );
+        _updateUserInfo(userState);
+        _showSnackbar("Your Profile is Updated Successfully!", Colors.green);
+
+        Future.delayed(const Duration(seconds: 2), () {
+          Navigator.pop(context);
         });
+      } catch (e) {
+        Validators.showSnackBar(context, "Error: $e");
       }
-
-      // Update profile details in backend
-      var response = await fastAPI.editUserProfile(
-        context,
-        _nameController.text.trim(),
-        _emailController.text.trim(),
-        userState.currentUser?.email ?? '',
-        _profilePictureUrl,
-      );
-
-      print("API Response: $response");
-
-      // If successful, update the UserState
-      _updateUserInfo(userState);
-      _showSnackbar("Profile updated successfully!", Colors.green);
-
-      Future.delayed(const Duration(seconds: 2), () {
-        Navigator.pop(context);
-      });
-    } catch (e) {
-      _showSnackbar("Error: $e", Colors.red);
     }
   }
 
   void _updateUserInfo(UserState userState) {
     final updatedUser = User(
-      name: _nameController.text.trim(),
-      email: _emailController.text.trim(),
+      name: _nameController.text,
+      email: _emailController.text,
       groups: userState.currentUser?.groups ?? [],
       loginStatus: userState.currentUser?.loginStatus ?? false,
       createdAt: userState.currentUser?.createdAt ?? '',
@@ -127,7 +150,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final snackBar = SnackBar(
       content: Text(message),
       backgroundColor: color,
-      duration: Duration(seconds: 2),
+      duration: const Duration(seconds: 2),
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
@@ -142,44 +165,47 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final userState = Provider.of<UserState>(context, listen: true);
-
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit Profile'),
+        title: const Text('Edit My Profile'),
         backgroundColor: Colors.teal,
-        elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+          child: ListView(
             children: [
-              Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 70,
-                    backgroundImage: _profilePictureUrl.isNotEmpty
-                        ? NetworkImage(_profilePictureUrl)
-                        : AssetImage('assets/default_profile_picture.png') as ImageProvider,
-                    backgroundColor: Colors.teal[100],
-                  ),
-                  Positioned(
-                    bottom: 10,
-                    right: 10,
-                    child: GestureDetector(
-                      onTap: _showImageSourceDialog,
-                      child: CircleAvatar(
-                        radius: 20,
-                        backgroundColor: Colors.teal,
-                        child: Icon(Icons.camera_alt, color: Colors.white, size: 20),
+              Center(
+                child: Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundImage: _imageBytes != null
+                          ? MemoryImage(_imageBytes!)
+                          : _image != null
+                          ? FileImage(_image!)
+                          : (_profilePictureUrl.isNotEmpty
+                          ? NetworkImage(_profilePictureUrl)
+                          : const AssetImage('assets/default_profile_picture.png')) as ImageProvider,
+                      backgroundColor: Colors.grey[300],
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: GestureDetector(
+                        onTap: _showImageSourceDialog,
+                        child: const CircleAvatar(
+                          radius: 18,
+                          backgroundColor: Colors.blue,
+                          child: Icon(Icons.camera_alt, color: Colors.white, size: 18),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              SizedBox(height: 40),
+              const SizedBox(height: 30),
               TextFormField(
                 controller: _nameController,
                 decoration: InputDecoration(
