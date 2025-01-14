@@ -59,9 +59,10 @@ class NavigationBarWidget extends StatelessWidget {
 
             break;
           case 3:
-          // Navigate to Analytics Screen
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text("Analytics Screen is under development.")),
+           // Navigate to Analytics Screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => AnalyticsScreen()),
             );
             break;
           default:
