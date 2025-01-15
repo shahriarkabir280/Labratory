@@ -3,6 +3,8 @@ import 'package:testapp/features/Expense Tracking/Budgets/budget.dart';
 import 'package:testapp/features/Expense Tracking/Expenses/expense.dart';
 import 'package:testapp/features/HomepageHandling/mainHomepage.dart';
 
+import '../Expenses/analytics.dart';
+
 class NavigationBarWidget extends StatelessWidget {
   /*final String groupName;
   

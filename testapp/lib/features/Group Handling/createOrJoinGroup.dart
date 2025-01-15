@@ -6,12 +6,12 @@ import '../HomepageHandling/mainHomepage.dart';
 import '../../authentications/loginScreen.dart';
 import '../../authentications/PasswordGenerator.dart';
 
-class CreateandJoinGroup extends StatefulWidget {
+class CreateOrJoinGroup extends StatefulWidget {
   @override
   _CreateOrJoinGroupState createState() => _CreateOrJoinGroupState();
 }
 
-class _CreateOrJoinGroupState extends State<CreateandJoinGroup> {
+class _CreateOrJoinGroupState extends State<CreateOrJoinGroup> {
   final _groupNameController = TextEditingController();
   final _groupCodeController = TextEditingController();
   final FASTAPI fastAPI = FASTAPI();
@@ -141,7 +141,7 @@ class _CreateOrJoinGroupState extends State<CreateandJoinGroup> {
                     onPressed: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => mainHomepage()),
+                        MaterialPageRoute(builder: (context) => loginScreen()),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -181,23 +181,29 @@ class _CreateOrJoinGroupState extends State<CreateandJoinGroup> {
 
                       if (groupCode.isNotEmpty) {
                         try {
-                          final groupData = await fastAPI.findGroup(context, groupCode);
-                          if (groupData.isNotEmpty) {
-                            final group = Group.fromJson(groupData);
+
+                          final response = await fastAPI.joinGroup(context, email, groupCode);
+                          if(response['success']=true){
+
+
+                            final group = Group.fromJson(response['group']);
+
                             userState.addGroup(group);
                             userState.setCurrentGroup(group);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Joined Group Successfully"),
-                                backgroundColor: Colors.lightGreen,
-                              ),
-                            );
+
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(builder: (context) => mainHomepage()),
                             );
-                          } else {
-                            throw Exception("Group not found");
+
+                          }
+                          else{
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Failed to join group"),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
                           }
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -223,12 +229,6 @@ class _CreateOrJoinGroupState extends State<CreateandJoinGroup> {
                           final response = await fastAPI.createGroup(context, email, groupName, password);
 
                           if (response['success'] == true) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Created Group Successfully"),
-                                backgroundColor: Colors.lightGreen,
-                              ),
-                            );
                             final group = Group.fromJson(response['group']);
 
                             userState.addGroup(group);

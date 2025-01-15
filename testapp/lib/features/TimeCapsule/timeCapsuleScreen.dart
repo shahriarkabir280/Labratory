@@ -5,10 +5,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:testapp/backend_connections/FASTAPI.dart';
 import '../../Models/UserState.dart';
-import 'categories/image_category.dart';
-import 'categories/video_category.dart';
-import 'categories/audio_category.dart';
-import 'categories/stories_category.dart';
+import 'Categories/image_category.dart';
+import 'Categories/video_category.dart';
+
 
 FASTAPI fastapi = FASTAPI();
 

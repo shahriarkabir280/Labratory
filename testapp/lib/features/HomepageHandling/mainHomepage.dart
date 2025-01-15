@@ -11,9 +11,10 @@ import '../Drawer/about.dart';
 import '../Drawer/changePassword.dart';
 import '../Drawer/privacyPolicy.dart';
 import '../Drawer/termsAndConditions.dart';
-import 'package:testapp/features/GroupsHandling/createandjoingroup.dart';
-import 'package:testapp/features/GroupsHandling/groupScreen.dart';
 import 'package:testapp/features/Drawer/editProfile.dart';
+
+import '../Group Handling/createandjoingroup.dart';
+import '../Group Handling/groupScreen.dart';
 
 class mainHomepage extends StatefulWidget {
   @override
