@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:testapp/backend_connections/FASTAPI.dart';
 import 'package:testapp/Models/UserState.dart';
 import 'package:testapp/features/HomepageHandling/mainHomepage.dart';
-import 'package:testapp/features/GroupsHandling/createOrJoinGroup.dart';
+import 'package:testapp/features/Group Handling/createOrJoinGroup.dart';
 import 'package:testapp/authentications/signupScreen.dart';
 import 'package:testapp/authentications/forgetPasswordScreen.dart';
 
