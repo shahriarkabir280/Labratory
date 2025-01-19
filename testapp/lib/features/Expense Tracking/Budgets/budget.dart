@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:testapp/Models/DataModel.dart';
+import 'package:my_app/Models/DataModel.dart';
 import 'create_budget.dart';
-import 'package:testapp/features/Expense Tracking/Budgets/budget_list.dart';
+import 'package:my_app/features/Expense Tracking/Budgets/budget_list.dart';
 import 'package:provider/provider.dart';
-
 class BudgetScreen extends StatefulWidget {
   @override
   _BudgetScreenState createState() => _BudgetScreenState();
@@ -151,6 +150,9 @@ class _BudgetScreenState extends State<BudgetScreen> {
                 : BudgetList(
               budgets: filteredBudgets,
               onEditBudget: dataModel.addBudget,
+              onDeleteBudget: (budget) {
+                dataModel.deleteBudget(budget);
+              },
             ),
           ),
         ],
