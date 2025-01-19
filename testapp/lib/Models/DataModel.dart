@@ -1,30 +1,11 @@
-import 'package:flutter/material.dart';
+ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-
 
 class DataModel extends ChangeNotifier {
   final List<Map<String, dynamic>> budgets = [];
   final List<Map<String, dynamic>> expenses = [];
 
   // Add a new budget
-  void addBudget(Map<String, dynamic> budget) {
-    int index = budgets.indexWhere((b) =>
-    b['category'] == budget['category'] &&
-        b['month'].month == budget['month'].month &&
-        b['month'].year == budget['month'].year
-    );
-
-    if (index != -1) {
-      // If the budget for the category and month exists, update it
-      budgets[index]['amount'] += budget['amount'];
-    } else {
-      // Otherwise, add a new budget
-      budgets.add(budget);
-    }
-    notifyListeners();
-  }
-
-  // Add a new expense
   void addExpense(Map<String, dynamic> expense) {
     expenses.add(expense);
 
@@ -36,8 +17,34 @@ class DataModel extends ChangeNotifier {
         budget['spent'] += expense['amount'];
       }
     }
-    notifyListeners();
+
+    notifyListeners(); // Notify listeners for dynamic updates
   }
+  void deleteExpense(Map<String, dynamic> expense) {
+    expenses.remove(expense);
+    notifyListeners(); // Notify listeners for dynamic updates
+  }
+  void addBudget(Map<String, dynamic> budget) {
+    int index = budgets.indexWhere((b) =>
+    b['category'] == budget['category'] &&
+        b['month'].month == budget['month'].month &&
+        b['month'].year == budget['month'].year);
+
+    if (index != -1) {
+      budgets[index]['amount'] += budget['amount'];
+    } else {
+      budgets.add(budget);
+    }
+
+    notifyListeners(); // Notify listeners for dynamic updates
+  }
+  // DataModel.dart
+  void deleteBudget(Map<String, dynamic> budget) {
+    budgets.remove(budget);
+    notifyListeners(); // Notify listeners for dynamic updates
+  }
+
+
 
   // Calculate the total budget for the current month
   double getTotalBudget() {
@@ -85,7 +92,7 @@ class DataModel extends ChangeNotifier {
         .toList();
   }
 
-  // Get expenses for a specific month
+  // Get expenses for a specific month -1
   List<Map<String, dynamic>> getExpensesForMonth(DateTime? month) {
     if (month == null) return [];
 
@@ -95,6 +102,67 @@ class DataModel extends ChangeNotifier {
     }).toList();
   }
 
+  // Get budgets for a specific month -2
+  List<Map<String, dynamic>> getBudgetsForMonth(DateTime? month) {
+    if (month == null) return [];
+
+    return budgets.where((budget) {
+      final budgetDate = budget['month'];
+      return budgetDate.month == month.month && budgetDate.year == month.year;
+    }).toList();
+  }
+
+  // Get category-wise budgets for a specific month
+  Map<String, double> getCategoryWiseBudgetsForSpecificMonth(DateTime? month) {
+    if (month == null) return {};
+
+    final filteredBudgets = budgets.where((budget) {
+      final budgetDate = budget['month'];
+      return budgetDate.month == month.month && budgetDate.year == month.year;
+    });
+
+    // Group budgets by category and sum their amounts
+    Map<String, double> categoryWiseBudgets = {};
+    for (var budget in filteredBudgets) {
+      final category = budget['category'];
+      final amount = budget['amount'] ?? 0.0;
+
+      if (categoryWiseBudgets.containsKey(category)) {
+        categoryWiseBudgets[category] = categoryWiseBudgets[category]! + amount;
+      } else {
+        categoryWiseBudgets[category] = amount;
+      }
+    }
+
+    return categoryWiseBudgets;
+  }
+
+  Map<String, double> getCategoryWiseExpensesForSpecificMonth(DateTime? month) {
+    if (month == null) return {};
+
+    // Filter expenses for the given month
+    final filteredExpenses = expenses.where((expense) {
+      final expenseDate = expense['date'];
+      return expenseDate.month == month.month && expenseDate.year == month.year;
+    });
+
+    // Group expenses by category and sum their amounts
+    Map<String, double> categoryWiseExpenses = {};
+    for (var expense in filteredExpenses) {
+      final category = expense['category'];
+      final amount = expense['amount'] ?? 0.0;
+
+      if (categoryWiseExpenses.containsKey(category)) {
+        categoryWiseExpenses[category] = categoryWiseExpenses[category]! + amount;
+      } else {
+        categoryWiseExpenses[category] = amount;
+      }
+    }
+
+    return categoryWiseExpenses;
+  }
+
+  // Get category-wise expenses for the current month
   Map<String, double> getCategoryWiseExpensesForCurrentMonth() {
     final now = DateTime.now();
 
@@ -120,7 +188,57 @@ class DataModel extends ChangeNotifier {
     return categoryWiseExpenses;
   }
 
+  // Year-wise total budgets
+  double getTotalBudgetsForYear(int year) {
+    return budgets
+        .where((budget) => budget['month'].year == year)
+        .fold(0.0, (sum, budget) => sum + budget['amount']);
+  }
+
+  // Year-wise total expenses
+  double getTotalExpensesForYear(int year) {
+    return expenses
+        .where((expense) => expense['date'].year == year)
+        .fold(0.0, (sum, expense) => sum + expense['amount']);
+  }
+
+  // Year-wise category-wise budgets
+  Map<String, double> getCategoryWiseBudgetsForYear(int year) {
+    final filteredBudgets = budgets.where((budget) => budget['month'].year == year);
+
+    Map<String, double> categoryWiseBudgets = {};
+    for (var budget in filteredBudgets) {
+      final category = budget['category'];
+      final amount = budget['amount'] ?? 0.0;
+
+      if (categoryWiseBudgets.containsKey(category)) {
+        categoryWiseBudgets[category] = categoryWiseBudgets[category]! + amount;
+      } else {
+        categoryWiseBudgets[category] = amount;
+      }
+    }
+
+    return categoryWiseBudgets;
+  }
+
+  // Year-wise category-wise expenses
+  Map<String, double> getCategoryWiseExpensesForYear(int year) {
+    final filteredExpenses = expenses.where((expense) => expense['date'].year == year);
+
+    Map<String, double> categoryWiseExpenses = {};
+    for (var expense in filteredExpenses) {
+      final category = expense['category'];
+      final amount = expense['amount'] ?? 0.0;
+
+      if (categoryWiseExpenses.containsKey(category)) {
+        categoryWiseExpenses[category] = categoryWiseExpenses[category]! + amount;
+      } else {
+        categoryWiseExpenses[category] = amount;
+      }
+    }
+
+    return categoryWiseExpenses;
+  }
+
 
 }
-
-
