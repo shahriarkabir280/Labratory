@@ -1,13 +1,17 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:testapp/backend_connections/FASTAPI.dart';
 import '../../Models/UserState.dart';
+import '../gradient_color.dart';
+import 'Categories/audio_category.dart';
 import 'Categories/image_category.dart';
 import 'Categories/video_category.dart';
-
+import 'Categories/stories_category.dart';
+// import 'package:audioplayers/audioplayers.dart';
 
 FASTAPI fastapi = FASTAPI();
 
@@ -55,9 +59,11 @@ class _TimeCapsuleScreenState extends State<timeCapsuleScreen>
             ["Images", "Videos", "Voices", "Stories"][_tabController.index];
         _searchController.clear();
         searchQuery = "";
-        print("hello lad");
         if (currentGroupCode != null) {
-          fetchMediaFiles(currentGroupCode!, selectedCategory.toLowerCase());
+          if (selectedCategory.toLowerCase() == "stories") {
+            fetchMediaFiles(currentGroupCode!, "storie");
+          } else
+            fetchMediaFiles(currentGroupCode!, selectedCategory.toLowerCase());
         }
       });
     });
@@ -79,21 +85,33 @@ class _TimeCapsuleScreenState extends State<timeCapsuleScreen>
     final userState = Provider.of<UserState>(context, listen: true);
     currentGroupCode = userState.currentUser?.currentGroup?.groupCode;
     if (currentGroupCode != null) {
-      fetchMediaFiles(currentGroupCode!, selectedCategory.toLowerCase());
+      if (selectedCategory.toLowerCase() == "stories") {
+        fetchMediaFiles(currentGroupCode!, "storie");
+      } else
+        fetchMediaFiles(currentGroupCode!, selectedCategory.toLowerCase());
     }
   }
 
   Future<void> fetchMediaFiles(String groupCode, String media_type) async {
-    media_type = media_type.substring(0, media_type.length - 1);
+    if (media_type == "voices")
+      media_type = "audio";
+    else if (media_type != "storie")
+      media_type = media_type.substring(0, media_type.length - 1);
     try {
       final mediafiles =
           await fastapi.FetchMediaFiles(context, groupCode, media_type);
+      print(media_type);
       setState(() {
         if (media_type == "image")
           categoryData["Images"] = mediafiles;
-        else if (media_type == "video") categoryData["Videos"] = mediafiles;
+        else if (media_type == "video")
+          categoryData["Videos"] = mediafiles;
+        else if (media_type == "storie")
+          categoryData["Stories"] = mediafiles;
+        else if (media_type == "audio") categoryData["Voices"] = mediafiles;
       });
-      print("fetch part e asi categoryData['Images']: ${categoryData["Images"]}");
+      print(
+          "fetch part e asi categoryData['Images']: ${categoryData["Images"]}");
     } catch (e) {
       print("Error fetching media files: $e");
     }
@@ -117,13 +135,61 @@ class _TimeCapsuleScreenState extends State<timeCapsuleScreen>
               "url": cloudinaryResponse["url"],
               // URL returned from Cloudinary
             });
-            print("upload part e asi categoryData['Images']: ${categoryData["Images"]}");
+            print(
+                "upload part e asi categoryData['Images']: ${categoryData["Images"]}");
           });
         }
 //print("upload part er baireeee categoryData['Images']: ${categoryData["Images"]}");
       } catch (e) {
         print("Error uploading image: $e");
       }
+    }
+  }
+
+  Future<void> _pickAudioFromFiles() async {
+    // Open file picker for audio files
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.audio, // Only allow audio files
+    );
+
+    if (result != null) {
+      // Get the picked file
+      var pickedFile = result.files.single;
+
+      // Get the path of the selected audio file
+      String? filePath = pickedFile.path;
+
+      if (filePath != null) {
+        try {
+          // Call your upload function (similar to the image upload function)
+          final cloudinaryResponse = await fastapi.UploadMediaFilesToCloudinary(
+            context,
+            File(filePath), // Convert file path to a File object
+            pickedFile.name, // The name of the audio file
+            currentGroupCode!, // Pass the current group code
+            "audio", // Specify the type as "audio"
+          );
+
+          if (cloudinaryResponse != null) {
+            setState(() {
+              // Store only the file name and URL, no need for file_path
+              categoryData["Voices"]!.add({
+                "file_name": pickedFile.name,
+                "url": cloudinaryResponse["url"], // URL returned from Cloudinary
+              });
+
+              print("Updated Voices category: ${categoryData["Voices"]}");
+            });
+          }
+        } catch (e) {
+          print("Error uploading audio file: $e");
+        }
+      } else {
+        print("Selected file has no path");
+      }
+    } else {
+      // User canceled the file picking
+      print("No audio file selected");
     }
   }
 
@@ -171,6 +237,99 @@ class _TimeCapsuleScreenState extends State<timeCapsuleScreen>
     }
   }
 
+  Future<void> _createTextStory() async {
+    final TextEditingController titleController = TextEditingController();
+    final TextEditingController contentController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Create Your Story"),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(
+                    labelText: "Title",
+                    hintText: "Enter the title of your story",
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: contentController,
+                  decoration: const InputDecoration(
+                    labelText: "Content",
+                    hintText: "Write your story here",
+                  ),
+                  maxLines: 5,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close the dialog
+              },
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () async {
+                final String title = titleController.text.trim();
+                final String content = contentController.text.trim();
+
+                if (title.isNotEmpty && content.isNotEmpty) {
+                  _saveTextStory(title, content); // Save the story
+                  Navigator.pop(context); // Close the dialog
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text("Title and content cannot be empty.")),
+                  );
+                }
+              },
+              child: const Text("Create"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Future<void> _saveTextStory(String title, String content) async {
+  //   // Example: Adding the story to the categoryData
+  //   setState(() {
+  //     categoryData["Stories"]!.add({
+  //       "title": title,
+  //       "content": content,
+  //     });
+  //   });
+  //
+  //   // Optional: Save to backend
+  //   try {
+  //     // final response = await fastapi.uploadStory(
+  //     //   title: title,
+  //     //   content: content,
+  //     //   groupCode: currentGroupCode!,
+  //     // );
+  //
+  //     // if (response) {
+  //     //   ScaffoldMessenger.of(context).showSnackBar(
+  //     //     const SnackBar(content: Text("Story created successfully!")),
+  //     //   );
+  //     // } else {
+  //     //   ScaffoldMessenger.of(context).showSnackBar(
+  //     //     const SnackBar(content: Text("Failed to save the story.")),
+  //     //   );
+  //     // }
+  //   } catch (e) {
+  //     print("Error saving story: $e");
+  //   }
+  // }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -198,9 +357,7 @@ class _TimeCapsuleScreenState extends State<timeCapsuleScreen>
           ),
         ],
         bottom: PreferredSize(
-          preferredSize: isSearchBarVisible
-              ? const Size.fromHeight(150)
-              : const Size.fromHeight(50),
+          preferredSize: Size.fromHeight(isSearchBarVisible ? 120 : 60),
           child: Column(
             children: [
               if (isSearchBarVisible)
@@ -221,26 +378,57 @@ class _TimeCapsuleScreenState extends State<timeCapsuleScreen>
                     },
                   ),
                 ),
+              const SizedBox(height: 20),
               TabBar(
                 controller: _tabController,
-                indicator: BoxDecoration(
-                  color: Colors.transparent, // Transparent since the tabs will have their own colors
+                indicator: const BoxDecoration(
+                  color: Colors
+                      .transparent, // No indicator since tabs have their own decoration
                 ),
-                indicatorWeight: 0.0, // This removes the thin indicator line
-                labelPadding: EdgeInsets.zero, // Ensures tabs fill the width evenly
+                indicatorWeight: 0.0,
+                // Removes the default thin indicator line
+                labelPadding: EdgeInsets.zero,
+                // Ensures tabs fill the width evenly
                 tabs: [
                   Tab(
                     child: ClipRRect(
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(13), // Rounded top left corner
-                        topRight: Radius.circular(13), // Rounded top right corner
+                        topRight:
+                            Radius.circular(13), // Rounded top right corner
                       ),
                       child: Container(
-                        color: Colors.lightBlueAccent.withOpacity(0.8), // Full background color
+                        decoration: BoxDecoration(
+                          gradient: DynamicGradient.createGradient(
+                            [
+                              Colors.lightBlue.withOpacity(0.5),
+                              Colors.indigo.withOpacity(0.4),
+                            ],
+                            Alignment.topLeft,
+                            Alignment.bottomRight,
+                          ),
+                          boxShadow: _tabController.index == 0
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.blue.withOpacity(0.6),
+                                    blurRadius: 10,
+                                    spreadRadius: 3,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                              : [],
+                        ),
                         alignment: Alignment.center,
-                        child: const Text(
+                        child: Text(
                           "Images",
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: _tabController.index == 0 ? 20 : 14,
+                            // Larger text for the active tab
+                            fontWeight: _tabController.index == 0
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
                         ),
                       ),
                     ),
@@ -248,15 +436,40 @@ class _TimeCapsuleScreenState extends State<timeCapsuleScreen>
                   Tab(
                     child: ClipRRect(
                       borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(13), // Rounded top left corner
-                        topRight: Radius.circular(13), // Rounded top right corner
+                        topLeft: Radius.circular(13),
+                        topRight: Radius.circular(13),
                       ),
                       child: Container(
-                        color: Colors.orangeAccent.withOpacity(0.9) ,// Full background color
+                        decoration: BoxDecoration(
+                          gradient: DynamicGradient.createGradient(
+                            [
+                              Colors.redAccent.withOpacity(0.4),
+                              Colors.deepOrangeAccent.withOpacity(0.8),
+                            ],
+                            Alignment.topLeft,
+                            Alignment.bottomRight,
+                          ),
+                          boxShadow: _tabController.index == 1
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.red.withOpacity(0.6),
+                                    blurRadius: 10,
+                                    spreadRadius: 3,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                              : [],
+                        ),
                         alignment: Alignment.center,
-                        child: const Text(
+                        child: Text(
                           "Videos",
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: _tabController.index == 1 ? 20 : 14,
+                            fontWeight: _tabController.index == 1
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
                         ),
                       ),
                     ),
@@ -264,15 +477,40 @@ class _TimeCapsuleScreenState extends State<timeCapsuleScreen>
                   Tab(
                     child: ClipRRect(
                       borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(13), // Rounded top left corner
-                        topRight: Radius.circular(13), // Rounded top right corner
+                        topLeft: Radius.circular(13),
+                        topRight: Radius.circular(13),
                       ),
                       child: Container(
-                        color: Colors.orange, // Full background color
+                        decoration: BoxDecoration(
+                          gradient: DynamicGradient.createGradient(
+                            [
+                              Colors.orange.withOpacity(0.6),
+                              Colors.orangeAccent.withOpacity(0.5),
+                            ],
+                            Alignment.topLeft,
+                            Alignment.bottomRight,
+                          ),
+                          boxShadow: _tabController.index == 2
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.orange.withOpacity(0.6),
+                                    blurRadius: 10,
+                                    spreadRadius: 3,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                              : [],
+                        ),
                         alignment: Alignment.center,
-                        child: const Text(
+                        child: Text(
                           "Voices",
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: _tabController.index == 2 ? 20 : 14,
+                            fontWeight: _tabController.index == 2
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
                         ),
                       ),
                     ),
@@ -280,28 +518,53 @@ class _TimeCapsuleScreenState extends State<timeCapsuleScreen>
                   Tab(
                     child: ClipRRect(
                       borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(13), // Rounded top left corner
-                        topRight: Radius.circular(13), // Rounded top right corner
+                        topLeft: Radius.circular(13),
+                        topRight: Radius.circular(13),
                       ),
                       child: Container(
-                        color: Colors.purple, // Full background color
+                        decoration: BoxDecoration(
+                          gradient: DynamicGradient.createGradient(
+                            [
+                              Colors.green.withOpacity(0.4),
+                              Colors.lightGreenAccent.withOpacity(0.6),
+                            ],
+                            Alignment.topLeft,
+                            Alignment.bottomRight,
+                          ),
+                          boxShadow: _tabController.index == 3
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.green.withOpacity(0.6),
+                                    blurRadius: 10,
+                                    spreadRadius: 3,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                              : [],
+                        ),
                         alignment: Alignment.center,
-                        child: const Text(
+                        child: Text(
                           "Stories",
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: _tabController.index == 3 ? 20 : 14,
+                            fontWeight: _tabController.index == 3
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ],
-              )
-
-              ,
+              ),
             ],
           ),
         ),
-        elevation: 0, // Remove the shadow below the AppBar
-        backgroundColor: Colors.transparent,// Set AppBar background to transparent if needed
+        elevation: 0,
+        // Remove the shadow below the AppBar
+        backgroundColor: Colors
+            .transparent, // Set AppBar background to transparent if needed
         // bottomOpacity: 0.0
       ),
       body: TabBarView(
@@ -328,13 +591,20 @@ class _TimeCapsuleScreenState extends State<timeCapsuleScreen>
           //     onRename: _renameItem,
           //     onDelete: _deleteItem,
           //   ),
-          //   StoryCategory(
-          //     items: categoryData["Stories"]!,
-          //     searchQuery: searchQuery,
-          //     searchController: _searchController,
-          //     onRename: _renameItem,
-          //     onDelete: _deleteItem,
-          //   ),
+          AudioCategory(
+            items: categoryData["Voices"]!,
+            searchQuery: searchQuery,
+            searchController: _searchController,
+            onRename: _renameItem,
+            onDelete: _deleteItem,
+          ),
+          StoriesCategory(
+            items: categoryData["Stories"]!,
+            searchQuery: searchQuery,
+            searchController: _searchController,
+            onEditStory: _EditStory,
+            onDeleteStory: _deleteStory,
+          ),
         ],
       ),
       floatingActionButton: _buildFloatingActionButton(),
@@ -345,7 +615,7 @@ class _TimeCapsuleScreenState extends State<timeCapsuleScreen>
     final categoryIcons = {
       "Images": Icons.add_a_photo,
       "Videos": Icons.videocam,
-      "Audio": Icons.mic,
+      "Voices": Icons.mic,
       "Stories": Icons.edit,
     };
 
@@ -418,34 +688,26 @@ class _TimeCapsuleScreenState extends State<timeCapsuleScreen>
         );
         break;
       //
-      // case "Audio":
-      //   showModalBottomSheet(
-      //     context: context,
-      //     builder: (context) {
-      //       return Column(
-      //         mainAxisSize: MainAxisSize.min,
-      //         children: [
-      //           ListTile(
-      //             leading: const Icon(Icons.mic),
-      //             title: const Text("Record Audio"),
-      //             onTap: () async {
-      //               Navigator.pop(context);
-      //               await _recordAudio();
-      //             },
-      //           ),
-      //           ListTile(
-      //             leading: const Icon(Icons.audiotrack),
-      //             title: const Text("Select from Files"),
-      //             onTap: () async {
-      //               Navigator.pop(context);
-      //               await _pickAudioFromFiles();
-      //             },
-      //           ),
-      //         ],
-      //       );
-      //     },
-      //   );
-      //   break;
+      case "Voices":
+        showModalBottomSheet(
+          context: context,
+          builder: (context) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.audiotrack),
+                  title: const Text("Select from Files"),
+                  onTap: () async {
+                    Navigator.pop(context);
+                    await _pickAudioFromFiles();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+        break;
       //
       // case "Stories":
       //   showModalBottomSheet(
@@ -475,6 +737,21 @@ class _TimeCapsuleScreenState extends State<timeCapsuleScreen>
       //     },
       //   );
       //   break;
+      case "Stories":
+        showModalBottomSheet(
+          context: context,
+          builder: (context) {
+            return ListTile(
+              leading: const Icon(Icons.text_fields),
+              title: const Text("Create a Story"),
+              onTap: () async {
+                Navigator.pop(context);
+                await _createTextStory(); // Calls the function to create a text story
+              },
+            );
+          },
+        );
+        break;
 
       default:
         // Handle other cases or show a default action
@@ -506,10 +783,13 @@ class _TimeCapsuleScreenState extends State<timeCapsuleScreen>
                   categoryData[category]![index]['file_name'] =
                       renameController.text;
                 });
-                String media_type = category.toLowerCase();
-                media_type = media_type.substring(0, media_type.length - 1);
-                await fastapi.RenameItems(
-                    context, currentGroupCode!, index, renameController.text , media_type);
+                  String media_type = category.toLowerCase();
+                if (media_type == "voices")
+                  media_type = "audio";
+                else
+                  media_type = media_type.substring(0, media_type.length - 1);
+                await fastapi.RenameItems(context, currentGroupCode!, index,
+                    renameController.text, media_type);
                 Navigator.pop(context); // Close the dialog after renaming
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -546,8 +826,12 @@ class _TimeCapsuleScreenState extends State<timeCapsuleScreen>
                   categoryData[category]!.removeAt(index); // Delete the item
                 });
                 String media_type = category.toLowerCase();
-                media_type = media_type.substring(0, media_type.length - 1);
-                await fastapi.DeleteItems(context, currentGroupCode!, index, media_type);
+                if (media_type == "voices")
+                  media_type = "audio";
+                else
+                  media_type = media_type.substring(0, media_type.length - 1);
+                await fastapi.DeleteItems(
+                    context, currentGroupCode!, index, media_type);
                 Navigator.pop(context); // Close the dialog after deletion
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -565,4 +849,189 @@ class _TimeCapsuleScreenState extends State<timeCapsuleScreen>
       },
     );
   }
+
+  Future<void> _saveTextStory(String title, String content) async {
+    // Example: Adding the story to the categoryData
+
+    try {
+      await fastapi.UploadStories(
+        context,
+        title,
+        content,
+        currentGroupCode!,
+      );
+
+      setState(() {
+        categoryData["Stories"]!.add({
+          "title": title,
+          "content": content,
+          // URL returned from Cloudinary
+        });
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Story Added Successfully')),
+      );
+    } catch (e) {
+      print("Error uploading story: $e");
+    }
+  }
+
+  void _EditStory(int index) {
+    // Initialize controllers with the current title and content
+    final titleController =
+        TextEditingController(text: categoryData["Stories"]![index]['title']);
+    final contentController =
+        TextEditingController(text: categoryData["Stories"]![index]['content']);
+    ;
+
+    // Show a dialog box for editing
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Edit Story'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(
+                    labelText: 'Title',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: contentController,
+                  decoration: const InputDecoration(
+                    labelText: 'Content',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 5,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                // Close the dialog without saving
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                // Save the new title and content
+                final newTitle = titleController.text.trim();
+                final newContent = contentController.text.trim();
+
+                // Ensure both title and content are not empty
+                if (newTitle.isNotEmpty && newContent.isNotEmpty) {
+                  setState(() {
+                    categoryData["Stories"]![index]['title'] = newTitle;
+                    categoryData["Stories"]![index]['content'] = newContent;
+                  });
+                  // Use the onEdit callback to update the specific index
+                  fastapi.UpdateStory(
+                      context, currentGroupCode!, index, newTitle, newContent);
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Story Edited Successfully')),
+                  );
+                } else {
+                  // Show an error message if fields are empty
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Title and Content cannot be empty')),
+                  );
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _deleteStory(int index) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        print(index);
+        return AlertDialog(
+          title: const Text("Delete File"),
+          content: const Text("Are you sure you want to delete file?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // Close the dialog without deleting
+              },
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                setState(() {
+                  categoryData["Stories"]!.removeAt(index); // Delete the item
+                });
+                await fastapi.DeleteStory(context, currentGroupCode!, index);
+                Navigator.pop(context); // Close the dialog after deletion
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content: Text("Story Deleted Successfully"),
+                      backgroundColor: Colors.lightGreen),
+                );
+              },
+              child: const Text("Delete"),
+              style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      Colors.redAccent), // Optional: make the delete button red
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+// Future<void> _pickAudioFromFiles() async {
+//   // Open file picker for audio files
+//   FilePickerResult? result = await FilePicker.platform.pickFiles(
+//     type: FileType.audio, // Only allow audio files
+//   );
+//
+//   if (result != null) {
+//     // Get the picked file
+//     var pickedFile = result.files.single;
+//
+//     // Get the path of the selected audio file
+//     String? filePath = pickedFile.path;
+//
+//     if (filePath != null) {
+//       print("Audio file selected: $filePath");
+//
+//       // Here you would upload the file to Cloudinary or another storage service
+//       // Assuming you have a function for uploading the file to Cloudinary:
+//       var cloudinaryResponse = await uploadToCloudinary(filePath);
+//
+//       if (cloudinaryResponse != null && cloudinaryResponse["url"] != null) {
+//         // Successfully uploaded to Cloudinary
+//         setState(() {
+//           categoryData["Voices"]!.add({
+//             "file_name": pickedFile.name, // Using pickedFile.name
+//             "url": cloudinaryResponse["url"], // URL returned from Cloudinary
+//           });
+//         });
+//       } else {
+//         print("Error uploading to Cloudinary");
+//       }
+//     } else {
+//       print("Selected file has no path");
+//     }
+//   } else {
+//     // User canceled the file picking
+//     print("No audio file selected");
+//   }
+// }
 }
