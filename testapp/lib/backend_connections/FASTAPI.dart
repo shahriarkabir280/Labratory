@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:testapp/backend_connections/api services/authentications/authentication.dart';
+import 'package:testapp/backend_connections/api%20services/feature/TimeCapsuleBackend.dart';
 
 import 'dart:typed_data';
 
@@ -126,6 +127,22 @@ class FASTAPI {
   // Rename an item from mongodb atlas
   Future<void> RenameItems(BuildContext context, String group_code, int index, String new_name, String media_type) async {
     await BackendServicesForTimeCapsule.RenameItem(group_code, index, new_name, media_type);
+  }
+
+  // Upload Stories
+  Future<void> UploadStories(
+      BuildContext context,String title,String content,String group_code) async {
+      await BackendServicesForTimeCapsule.uploadStories(title, content, group_code);
+  }
+
+  // Update Story from mongodb atlas
+  Future<void> UpdateStory(BuildContext context, String group_code, int index, String title , String content) async {
+    await BackendServicesForTimeCapsule.updateStory(group_code, index, title, content);
+  }
+
+  // delete Story from mongodb atlas
+  Future<void> DeleteStory(BuildContext context, String group_code, int index) async {
+    await BackendServicesForTimeCapsule.deleteStory(group_code, index);
   }
 // // Upload Time Capsule Image
 //   Future<Map<String, dynamic>> UploadVideoToCloudinary(
