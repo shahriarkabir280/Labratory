@@ -1,7 +1,12 @@
+
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:flutter_downloader/flutter_downloader.dart'; // Retained import for downloading functionality
+import 'package:share_plus/share_plus.dart'; // Import the share_plus package
 
-class VideoCategory extends StatelessWidget {
+import '../../gradient_color.dart';
+
+class VideoCategory extends StatefulWidget {
   final List<Map<String, dynamic>> items;
   final String searchQuery;
   final Function(String, int) onRename;
@@ -17,84 +22,193 @@ class VideoCategory extends StatelessWidget {
   });
 
   @override
+  _VideoCategoryState createState() => _VideoCategoryState();
+}
+
+class _VideoCategoryState extends State<VideoCategory> {
+  bool isSelectMode = false;
+  List<int> selectedIndices = [];
+
+  @override
   Widget build(BuildContext context) {
     // Filter items based on the search query
-    final filteredItems = items
+    final filteredItems = widget.items
         .where((item) =>
             item['file_name'] != null &&
-            item['file_name'].toLowerCase().contains(searchQuery.toLowerCase()))
+            item['file_name']
+                .toLowerCase()
+                .contains(widget.searchQuery.toLowerCase()))
         .toList();
-    return Container(
-        color: Colors.orangeAccent.withOpacity(0.9),
-        child: ListView.builder(
-          itemCount: filteredItems.length,
-          itemBuilder: (context, index) {
-            final item = filteredItems[index];
-            final videoUrl = item['url'] ?? ""; // Cloudinary URL of the video
-            final fileName = item['file_name'] ?? "Unnamed Video";
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 20.0),
-              // Space below each ListTile
-              child: ListTile(
-                leading: GestureDetector(
-                  onTap: () {
-                    if (videoUrl.isNotEmpty) {
-                      // Navigate to full-screen video view
-                      _showFullScreenVideo(context, videoUrl);
-                    } else {
-                      // Show a message if the URL is missing
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text("Video URL is missing"),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: DynamicGradient.createGradient(
+          [
+            Colors.orangeAccent.withOpacity(0.3),
+            Colors.redAccent.withOpacity(0.4)
+          ],
+          Alignment.bottomRight,
+          Alignment.topLeft,
+        ),
+      ),
+      child: Stack(
+        children: [
+          // GridView for videos
+          GridView.builder(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 2.0,
+              childAspectRatio: 0.75,
+            ),
+            itemCount: filteredItems.length,
+            itemBuilder: (context, index) {
+              final item = filteredItems[index];
+              final videoUrl = item['url'] ?? ""; // URL of the video
+              final fileName = item['file_name'] ?? "Unnamed Video";
+
+              return Padding(
+                padding: const EdgeInsets.all(2.0),
+                child: Column(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        if (videoUrl.isNotEmpty) {
+                          _showFullScreenVideo(context, videoUrl);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text("Video URL is missing")),
+                          );
+                        }
+                      },
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8.0),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 5.0,
+                              offset: const Offset(2, 2),
+                            ),
+                          ],
                         ),
-                      );
-                    }
-                  },
-                  child: Container(
-                    width: 65,
-                    height: 65,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8.0),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black26,
-                          blurRadius: 5.0,
-                          offset: Offset(2, 2),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8.0),
+                          child: videoUrl.isNotEmpty
+                              ? Container(
+                                  width: 80,
+                                  height: 80,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.6),
+                                    borderRadius: BorderRadius.circular(8.0),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black26,
+                                        blurRadius: 5.0,
+                                        offset: const Offset(2, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Image.asset(
+                                    'assets/TimeCapsuleIcons/videoIcon.jpg',
+                                    // Replace with the actual image URL or asset
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return const Icon(
+                                        Icons.broken_image,
+                                        size: 50,
+                                        color: Colors.white,
+                                      );
+                                    },
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.broken_image,
+                                  size: 50,
+                                ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12.0),
+                    Text(
+                      fileName.length > 40
+                          ? "${fileName.substring(0, 35)}..."
+                          : fileName,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 15.0,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    if (!isSelectMode)
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.edit, size: 25),
+                              onPressed: () => widget.onRename('Images', index),
+                            ),
+                            IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.delete, size: 25),
+                              onPressed: () => widget.onDelete('Images', index),
+                            ),
+                          ],
+                        ),
+                        // const SizedBox(height: 5), // Adjust height for spacing
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.download, size: 25),
+                              onPressed: () =>
+                                  _downloadVideo(videoUrl, fileName),
+                            ),
+                            IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(Icons.share, size: 25),
+                              onPressed: () => _shareVideo(videoUrl),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8.0),
-                      child: videoUrl.isNotEmpty
-                          ? const Icon(
-                              Icons.videocam,
-                              size: 50,
-                              color: Colors.blueAccent,
-                            ) // Placeholder icon for videos
-                          : const Icon(Icons.broken_image,
-                              size: 50), // Placeholder for missing URL
-                    ),
-                  ),
-                ),
-                title: Text(fileName),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () => onRename('Videos', index),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () => onDelete('Videos', index),
-                    ),
+                    if (isSelectMode)
+                      Positioned(
+                        top: 5,
+                        right: 5,
+                        child: Checkbox(
+                          value: selectedIndices.contains(index),
+                          onChanged: (bool? value) {
+                            setState(() {
+                              if (value == true) {
+                                selectedIndices.add(index);
+                              } else {
+                                selectedIndices.remove(index);
+                              }
+                            });
+                          },
+                        ),
+                      ),
                   ],
                 ),
-              ),
-            );
-          },
-        ));
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   // Full-screen video view
@@ -105,6 +219,46 @@ class VideoCategory extends StatelessWidget {
         builder: (context) => FullScreenVideoPage(videoUrl: videoUrl),
       ),
     );
+  }
+
+  // Download video functionality
+  void _downloadVideo(String videoUrl, String fileName) async {
+    if (videoUrl.isNotEmpty) {
+      try {
+        final taskId = await FlutterDownloader.enqueue(
+          url: videoUrl,
+          savedDir: '/storage/emulated/0/Download',
+          // Example save path
+          fileName: fileName,
+          showNotification: true,
+          // Show download progress
+          openFileFromNotification: true, // Open file after download
+        );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Download started")),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Download failed")),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Video URL is missing")),
+      );
+    }
+  }
+
+  // Share video functionality
+  void _shareVideo(String videoUrl) {
+    if (videoUrl.isNotEmpty) {
+      Share.share(videoUrl,
+          subject: "Check out this video!"); // Share the video URL
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Video URL is missing")),
+      );
+    }
   }
 }
 
@@ -123,7 +277,7 @@ class _FullScreenVideoPageState extends State<FullScreenVideoPage> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
+    _controller = VideoPlayerController.network(widget.videoUrl)
       ..initialize().then((_) {
         setState(() {});
         _controller.play(); // Auto-play the video
@@ -154,7 +308,6 @@ class _FullScreenVideoPageState extends State<FullScreenVideoPage> {
                       child: CircularProgressIndicator(),
                     ),
             ),
-            // Back button
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: ElevatedButton(
@@ -183,55 +336,3 @@ class _FullScreenVideoPageState extends State<FullScreenVideoPage> {
     );
   }
 }
-
-// import 'package:flutter/material.dart';
-// import 'dart:io';
-//
-// class VideoCategory extends StatelessWidget {
-//   final List<Map<String, dynamic>> items;
-//   final String searchQuery;
-//   final TextEditingController searchController;
-//   final Function(String, int) onRename;
-//   final Function(String, int) onDelete;
-//
-//   VideoCategory({
-//     required this.items,
-//     required this.searchQuery,
-//     required this.searchController,
-//     required this.onRename,
-//     required this.onDelete,
-//   });
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     // Filter videos based on the search query
-//     final filteredItems = items
-//         .where((item) =>
-//         item['file_name'].toLowerCase().contains(searchQuery.toLowerCase()))
-//         .toList();
-//
-//     return ListView.builder(
-//       itemCount: filteredItems.length,
-//       itemBuilder: (context, index) {
-//         final item = filteredItems[index];
-//         return ListTile(
-//           leading: Icon(Icons.video_library), // Video thumbnail can be added here
-//           title: Text(item['file_name']),
-//           trailing: Row(
-//             mainAxisSize: MainAxisSize.min,
-//             children: [
-//               IconButton(
-//                 icon: const Icon(Icons.edit),
-//                 onPressed: () => onRename('Videos', index),
-//               ),
-//               IconButton(
-//                 icon: const Icon(Icons.delete),
-//                 onPressed: () => onDelete('Videos', index),
-//               ),
-//             ],
-//           ),
-//         );
-//       },
-//     );
-//   }
-// }
