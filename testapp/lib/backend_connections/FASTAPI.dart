@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:testapp/backend_connections/api services/authentications/authentication.dart';
-import 'package:testapp/backend_connections/api%20services/feature/TimeCapsuleBackend.dart';
+import 'package:testapp/backend_connections/api%20services/features/TimeCapsuleBackend.dart';
 
 import 'dart:typed_data';
 
