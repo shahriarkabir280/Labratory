@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:testapp/features/Expense Tracking/Budgets/budget.dart';
 import 'package:testapp/features/Expense Tracking/Expenses/expense.dart';
-import 'package:testapp/features/HomepageHandling/mainHomepage.dart';
 
-import '../Expenses/analytics.dart';
+import 'package:testapp/features/Expense Tracking/Analytics/analytics.dart';
 
 class NavigationBarWidget extends StatelessWidget {
+  const NavigationBarWidget({super.key});
+
   /*final String groupName;
   
   NavigationBarWidget({required this.groupName});*/
@@ -18,7 +19,7 @@ class NavigationBarWidget extends StatelessWidget {
       selectedItemColor: Colors.teal.shade400,
       unselectedItemColor: Colors.grey.shade600,
       elevation: 10,
-      items: [
+      items: const [
         BottomNavigationBarItem(
           icon: Icon(Icons.home),
           label: 'Home',
@@ -49,14 +50,14 @@ class NavigationBarWidget extends StatelessWidget {
           // Navigate to Budget Screen
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => BudgetScreen()),
+              MaterialPageRoute(builder: (context) => const BudgetScreen()),
             );
             break;
           case 2:
           // Navigate to Expenses Screen
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => ExpenseScreen()),
+              MaterialPageRoute(builder: (context) => const ExpenseScreen()),
             );
 
             break;
@@ -64,7 +65,7 @@ class NavigationBarWidget extends StatelessWidget {
            // Navigate to Analytics Screen
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => AnalyticsScreen()),
+              MaterialPageRoute(builder: (context) => const AnalyticsScreen()),
             );
             break;
           default:

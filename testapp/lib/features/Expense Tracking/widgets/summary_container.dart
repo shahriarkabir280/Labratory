@@ -5,7 +5,7 @@ class SummaryContainer extends StatelessWidget {
   final double totalSpent;
   final double remaining;
 
-  SummaryContainer({
+  const SummaryContainer({super.key, 
     required this.totalBudget,
     required this.totalSpent,
     required this.remaining,
@@ -25,11 +25,11 @@ class SummaryContainer extends StatelessWidget {
           BoxShadow(
             color: Colors.teal.shade100.withOpacity(0.4),
             blurRadius: 10,
-            offset: Offset(0, 5),
+            offset: const Offset(0, 5),
           ),
         ],
       ),
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 25),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 25),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -68,7 +68,7 @@ class SummaryContainer extends StatelessWidget {
         Row(
           children: [
             Icon(icon, size: 18, color: color),
-            SizedBox(width: 8),
+            const SizedBox(width: 8),
             Text(
               label,
               style: TextStyle(
@@ -79,17 +79,17 @@ class SummaryContainer extends StatelessWidget {
             ),
           ],
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         // Amount Display
         Text(
-          '\$$amount',
+          '\৳$amount',
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: color,
           ),
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         // Progress Bar
         Stack(
           alignment: Alignment.center,
