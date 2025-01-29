@@ -15,8 +15,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => UserState()), // Provide UserState
         ChangeNotifierProvider(create: (_) => DataModel()), // Provide DataModel if still used
+        ChangeNotifierProvider(create: (_) => UserState()), // Provide UserState
+
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
