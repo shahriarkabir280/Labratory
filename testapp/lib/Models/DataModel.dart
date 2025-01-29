@@ -1,244 +1,291 @@
- import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter/material.dart';
+
+import '../backend_connections/api services/features/Expense_Tracking.dart';
+
+class Budget {
+  final String? id;
+  final String category;
+  final DateTime month;
+  double amount;
+  double spent;
+  final String groupCode;
+
+  Budget({
+    this.id,
+    required this.category,
+    required this.month,
+    required this.amount,
+    this.spent = 0.0,
+    required this.groupCode,
+  });
+
+  factory Budget.fromJson(Map<String, dynamic> json) {
+    return Budget(
+      id: json['id'],
+      category: json['category'],
+      month: DateTime.parse(json['month']),
+      amount: json['amount'],
+      spent: json['spent'] ?? 0.0,
+      groupCode: json['groupCode'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (id != null) 'id': id,  // Only include id if it's not null
+      'category': category,
+      'month': month.toIso8601String(),
+      'amount': amount,
+      'spent': spent,
+      'groupCode': groupCode,
+    };
+  }
+}
+
+class Expense {
+  final String? id;
+  final String category;
+  final DateTime date;
+  final double amount;
+  final String groupCode;
+
+  Expense({
+    this.id,
+    required this.category,
+    required this.date,
+    required this.amount,
+    required this.groupCode
+  });
+
+  factory Expense.fromJson(Map<String, dynamic> json) {
+    return Expense(
+      id: json['id'],
+      category: json['category'],
+      date: DateTime.parse(json['date']),
+      amount: json['amount'],
+      groupCode: json['groupCode'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (id != null) 'id': id,  // Only include id if it's not null
+      'category': category,
+      'date': date.toIso8601String(),
+      'amount': amount,
+      'groupCode': groupCode,
+    };
+  }
+}
 
 class DataModel extends ChangeNotifier {
-  final List<Map<String, dynamic>> budgets = [];
-  final List<Map<String, dynamic>> expenses = [];
+  List<Expense> expenses = [];
+  List<Budget> budgets = [];
+//date time
+  DateTime _selectedDate = DateTime.now();
 
-  // Add a new budget
-  void addExpense(Map<String, dynamic> expense) {
+  DateTime get selectedDate => _selectedDate;
+
+  void updateSelectedDate(DateTime date) {
+    _selectedDate = date;
+    notifyListeners();
+  }
+
+
+  //datetime
+  List<Budget> getBudgets() => budgets;
+
+  void setBudgets(List<Budget> newBudgets) {
+    budgets = newBudgets;
+    notifyListeners();
+  }
+
+  void setExpenses(List<Expense> newExpenses) {
+    expenses = newExpenses;
+    notifyListeners();
+  }
+
+  void addExpense(Expense expense) {
     expenses.add(expense);
 
-    // Deduct the expense from the relevant budget
     for (var budget in budgets) {
-      if (budget['category'] == expense['category'] &&
-          budget['month'].month == expense['date'].month &&
-          budget['month'].year == expense['date'].year) {
-        budget['spent'] += expense['amount'];
+      if (budget.category == expense.category &&
+          budget.month.month == expense.date.month &&
+          budget.month.year == expense.date.year) {
+        budget.spent += expense.amount;
+        break;
       }
     }
+    notifyListeners();
+  }
 
-    notifyListeners(); // Notify listeners for dynamic updates
-  }
-  void deleteExpense(Map<String, dynamic> expense) {
+  void deleteExpense(Expense expense) {
     expenses.remove(expense);
-    notifyListeners(); // Notify listeners for dynamic updates
+    notifyListeners();
   }
-  void addBudget(Map<String, dynamic> budget) {
+
+  void addBudget(Budget budget) {
     int index = budgets.indexWhere((b) =>
-    b['category'] == budget['category'] &&
-        b['month'].month == budget['month'].month &&
-        b['month'].year == budget['month'].year);
+    b.category == budget.category &&
+        b.month.month == budget.month.month &&
+        b.month.year == budget.month.year);
 
     if (index != -1) {
-      budgets[index]['amount'] += budget['amount'];
+      budgets[index].amount = budget.amount;
     } else {
       budgets.add(budget);
     }
 
-    notifyListeners(); // Notify listeners for dynamic updates
-  }
-  // DataModel.dart
-  void deleteBudget(Map<String, dynamic> budget) {
-    budgets.remove(budget);
-    notifyListeners(); // Notify listeners for dynamic updates
+    notifyListeners();
   }
 
+  // void deleteBudget(Budget budget) {
+  //   budgets.remove(budget);
+  //   notifyListeners();
+  // }
 
-
-  // Calculate the total budget for the current month
   double getTotalBudget() {
     final now = DateTime.now();
     return budgets
         .where((budget) =>
-    budget['month'].month == now.month &&
-        budget['month'].year == now.year)
-        .fold(0.0, (sum, budget) => sum + budget['amount']);
+    budget.month.month == now.month && budget.month.year == now.year)
+        .fold(0.0, (sum, budget) => sum + budget.amount);
   }
 
-  // Calculate the total expenses for the current month
   double getTotalExpenses() {
     final now = DateTime.now();
-    return budgets
-        .where((budget) =>
-    budget['month'].month == now.month &&
-        budget['month'].year == now.year)
-        .fold(0.0, (sum, budget) => sum + budget['spent']);
+    return expenses
+        .where((expense) =>
+    expense.date.month == now.month && expense.date.year == now.year)
+        .fold(0.0, (sum, expense) => sum + expense.amount);
   }
 
-  // Get remaining budget for a specific category for the current month
   double getRemainingBudget(String category) {
     final now = DateTime.now();
     final budget = budgets.firstWhere(
           (b) =>
-      b['category'] == category &&
-          b['month'].month == now.month &&
-          b['month'].year == now.year,
-      orElse: () => {},
+      b.category == category &&
+          b.month.month == now.month &&
+          b.month.year == now.year,
+      orElse: () => Budget(category: category, month: now, amount: 0.0, id: '', groupCode: ''),
     );
-
-    if (budget.isEmpty) return 0.0;
-
-    return budget['amount'] - budget['spent'];
+    return budget.amount - budget.spent;
   }
 
-  // Get category-wise budgets for the current month
-  List<Map<String, dynamic>> getCategoryBudgets() {
+  List<Budget> getCategoryBudgets() {
     final now = DateTime.now();
     return budgets
         .where((budget) =>
-    budget['month'].month == now.month &&
-        budget['month'].year == now.year)
+    budget.month.month == now.month && budget.month.year == now.year)
         .toList();
   }
 
-  // Get expenses for a specific month -1
-  List<Map<String, dynamic>> getExpensesForMonth(DateTime? month) {
+  List<Expense> getExpensesForMonth(DateTime? month) {
     if (month == null) return [];
-
-    return expenses.where((expense) {
-      final expenseDate = expense['date'];
-      return expenseDate.month == month.month && expenseDate.year == month.year;
-    }).toList();
+    return expenses
+        .where((expense) =>
+    expense.date.month == month.month && expense.date.year == month.year)
+        .toList();
   }
 
-  // Get budgets for a specific month -2
-  List<Map<String, dynamic>> getBudgetsForMonth(DateTime? month) {
-    if (month == null) return [];
 
+  List<Budget> getBudgetsForMonth(DateTime? selectedMonth) {
+    if (selectedMonth == null) return budgets; // Return all budgets if no month is selected
     return budgets.where((budget) {
-      final budgetDate = budget['month'];
-      return budgetDate.month == month.month && budgetDate.year == month.year;
+      return budget.month.year == selectedMonth.year && budget.month.month == selectedMonth.month;
     }).toList();
   }
 
-  // Get category-wise budgets for a specific month
-  Map<String, double> getCategoryWiseBudgetsForSpecificMonth(DateTime? month) {
+  Map<String, double> getCategoryWiseExpensesForMonth(DateTime? month) {
     if (month == null) return {};
+    final filteredExpenses = getExpensesForMonth(month);
 
-    final filteredBudgets = budgets.where((budget) {
-      final budgetDate = budget['month'];
-      return budgetDate.month == month.month && budgetDate.year == month.year;
-    });
-
-    // Group budgets by category and sum their amounts
-    Map<String, double> categoryWiseBudgets = {};
-    for (var budget in filteredBudgets) {
-      final category = budget['category'];
-      final amount = budget['amount'] ?? 0.0;
-
-      if (categoryWiseBudgets.containsKey(category)) {
-        categoryWiseBudgets[category] = categoryWiseBudgets[category]! + amount;
-      } else {
-        categoryWiseBudgets[category] = amount;
-      }
-    }
-
-    return categoryWiseBudgets;
+    return {
+      for (var expense in filteredExpenses)
+        expense.category: filteredExpenses
+            .where((e) => e.category == expense.category)
+            .fold(0.0, (sum, e) => sum + e.amount),
+    };
   }
 
-  Map<String, double> getCategoryWiseExpensesForSpecificMonth(DateTime? month) {
-    if (month == null) return {};
-
-    // Filter expenses for the given month
-    final filteredExpenses = expenses.where((expense) {
-      final expenseDate = expense['date'];
-      return expenseDate.month == month.month && expenseDate.year == month.year;
-    });
-
-    // Group expenses by category and sum their amounts
-    Map<String, double> categoryWiseExpenses = {};
-    for (var expense in filteredExpenses) {
-      final category = expense['category'];
-      final amount = expense['amount'] ?? 0.0;
-
-      if (categoryWiseExpenses.containsKey(category)) {
-        categoryWiseExpenses[category] = categoryWiseExpenses[category]! + amount;
-      } else {
-        categoryWiseExpenses[category] = amount;
-      }
-    }
-
-    return categoryWiseExpenses;
-  }
-
-  // Get category-wise expenses for the current month
-  Map<String, double> getCategoryWiseExpensesForCurrentMonth() {
-    final now = DateTime.now();
-
-    // Filter expenses for the current month
-    final currentMonthExpenses = expenses.where((expense) {
-      final date = expense['date'];
-      return date.month == now.month && date.year == now.year;
-    });
-
-    // Group expenses by category and sum their amounts
-    Map<String, double> categoryWiseExpenses = {};
-    for (var expense in currentMonthExpenses) {
-      final category = expense['category'];
-      final amount = expense['amount'] ?? 0.0;
-
-      if (categoryWiseExpenses.containsKey(category)) {
-        categoryWiseExpenses[category] = categoryWiseExpenses[category]! + amount;
-      } else {
-        categoryWiseExpenses[category] = amount;
-      }
-    }
-
-    return categoryWiseExpenses;
-  }
-
-  // Year-wise total budgets
   double getTotalBudgetsForYear(int year) {
     return budgets
-        .where((budget) => budget['month'].year == year)
-        .fold(0.0, (sum, budget) => sum + budget['amount']);
+        .where((budget) => budget.month.year == year)
+        .fold(0.0, (sum, budget) => sum + budget.amount);
   }
 
-  // Year-wise total expenses
   double getTotalExpensesForYear(int year) {
     return expenses
-        .where((expense) => expense['date'].year == year)
-        .fold(0.0, (sum, expense) => sum + expense['amount']);
+        .where((expense) => expense.date.year == year)
+        .fold(0.0, (sum, expense) => sum + expense.amount);
   }
 
-  // Year-wise category-wise budgets
   Map<String, double> getCategoryWiseBudgetsForYear(int year) {
-    final filteredBudgets = budgets.where((budget) => budget['month'].year == year);
+    final filteredBudgets = budgets.where((budget) => budget.month.year == year);
 
-    Map<String, double> categoryWiseBudgets = {};
-    for (var budget in filteredBudgets) {
-      final category = budget['category'];
-      final amount = budget['amount'] ?? 0.0;
-
-      if (categoryWiseBudgets.containsKey(category)) {
-        categoryWiseBudgets[category] = categoryWiseBudgets[category]! + amount;
-      } else {
-        categoryWiseBudgets[category] = amount;
-      }
-    }
-
-    return categoryWiseBudgets;
+    return {
+      for (var budget in filteredBudgets)
+        budget.category: filteredBudgets
+            .where((b) => b.category == budget.category)
+            .fold(0.0, (sum, b) => sum + b.amount),
+    };
   }
 
-  // Year-wise category-wise expenses
   Map<String, double> getCategoryWiseExpensesForYear(int year) {
-    final filteredExpenses = expenses.where((expense) => expense['date'].year == year);
+    final filteredExpenses =
+    expenses.where((expense) => expense.date.year == year);
 
-    Map<String, double> categoryWiseExpenses = {};
-    for (var expense in filteredExpenses) {
-      final category = expense['category'];
-      final amount = expense['amount'] ?? 0.0;
-
-      if (categoryWiseExpenses.containsKey(category)) {
-        categoryWiseExpenses[category] = categoryWiseExpenses[category]! + amount;
-      } else {
-        categoryWiseExpenses[category] = amount;
-      }
-    }
-
-    return categoryWiseExpenses;
+    return {
+      for (var expense in filteredExpenses)
+        expense.category: filteredExpenses
+            .where((e) => e.category == expense.category)
+            .fold(0.0, (sum, e) => sum + e.amount),
+    };
   }
 
+  // Future<void> deleteBudget(Budget budget) async {
+  //   if (budget.id == null) return;
+  //
+  //   final success = await BudgetService.deleteBudget(budget.id!);
+  //   if (success) {
+  //     budgets.remove(budget);
+  //     notifyListeners();
+  //   }
+  // }
+  Future<void> deleteBudget(Budget budget) async {
+    if (budget.id == null) {
+      print('Budget ID is null');
+      return;
+    }
 
+    print('Deleting budget with ID: ${budget.id}');
+    final success = await BudgetService.deleteBudget(budget.id!);
+    if (success) {
+      print('Budget deleted successfully');
+      budgets.remove(budget);
+      notifyListeners();
+    } else {
+      print('Failed to delete budget on the server');
+    }
+  }
+
+  Future<void> renameBudget(Budget budget, String newCategory) async {
+    if (budget.id == null) return;
+  
+    final success = await BudgetService.renameBudget(budget.id!, newCategory);
+    if (success) {
+      int index = budgets.indexOf(budget);
+      if (index != -1) {
+        budgets[index] = Budget(
+          id: budget.id,
+          category: newCategory,
+          month: budget.month,
+          amount: budget.amount,
+          spent: budget.spent,
+          groupCode: budget.groupCode,
+        );
+        notifyListeners();
+      }
+    }
+  }
 }
