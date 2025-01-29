@@ -1,21 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:my_app/Models/DataModel.dart';
-import 'package:my_app/features/Expense Tracking/Expenses/add_expense.dart';
-import 'package:my_app/features/Expense Tracking/Expenses/expense_list.dart';
+import 'package:testapp/Models/DataModel.dart';
+import 'package:testapp/features/Expense Tracking/Expenses/add_expense.dart';
+import 'package:testapp/features/Expense Tracking/Expenses/expense_list.dart';
+import '../../../Models/UserState.dart';
+import '../../../backend_connections/api services/features/Expense_Tracking.dart';
 
 class ExpenseScreen extends StatefulWidget {
+  const ExpenseScreen({super.key});
+
   @override
   _ExpenseScreenState createState() => _ExpenseScreenState();
 }
 
 class _ExpenseScreenState extends State<ExpenseScreen> {
   DateTime? selectedMonth;
+  bool isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    // Set the selectedMonth to the current month by default
     selectedMonth = DateTime.now();
+    _fetchExpenses();
   }
 
   Future<void> _selectMonth(BuildContext context) async {
@@ -26,23 +33,49 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
       firstDate: DateTime(2020, 1, 1),
       lastDate: DateTime(2030, 12, 31),
       helpText: 'Select Month',
-      builder: (BuildContext context, Widget? child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Colors.teal,
-              onPrimary: Colors.white,
-              onSurface: Colors.teal,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
     if (picked != null) {
       setState(() {
         selectedMonth = picked;
       });
+      await _fetchExpenses();
+    }
+  }
+
+  Future<void> _fetchExpenses() async {
+    if (selectedMonth != null) {
+      setState(() {
+        isLoading = true;
+      });
+
+      final groupCode = Provider.of<UserState>(context, listen: false).currentUser?.currentGroup?.groupCode;
+      if (groupCode == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No current group selected")),
+        );
+        setState(() {
+          isLoading = false;
+        });
+        return;
+      }
+
+      try {
+        final expenses = await BudgetService.fetchExpenses(groupCode);
+        if (mounted) {
+          Provider.of<DataModel>(context, listen: false).setExpenses(expenses);
+        }
+      } catch (e) {
+        // Handle errors (e.g., network issues)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Error fetching expenses")),
+        );
+      } finally {
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+          });
+        }
+      }
     }
   }
 
@@ -53,15 +86,15 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Expenses'),
+        title: const Text('Expenses'),
         backgroundColor: Colors.teal,
         actions: [
           IconButton(
-            icon: Icon(Icons.add),
+            icon: const Icon(Icons.add),
             onPressed: () async {
               final newExpense = await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => AddExpenseScreen()),
+                MaterialPageRoute(builder: (context) => const AddExpenseScreen()),
               );
               if (newExpense != null) {
                 dataModel.addExpense(newExpense);
@@ -79,14 +112,17 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  'Expenses for ${selectedMonth != null ? "${selectedMonth!.month}/${selectedMonth!.year}" : "this month"}',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                Expanded(
+                  child: Text(
+                    'Expenses for ${selectedMonth != null ? "${selectedMonth!.month}/${selectedMonth!.year}" : "this month"}',
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 GestureDetector(
                   onTap: () => _selectMonth(context),
                   child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
@@ -95,7 +131,7 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                         BoxShadow(
                           color: Colors.grey.shade300,
                           blurRadius: 10,
-                          offset: Offset(0, 5),
+                          offset: const Offset(0, 5),
                         ),
                       ],
                     ),
@@ -107,8 +143,8 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
                               : 'Select Month',
                           style: TextStyle(fontSize: 16, color: Colors.grey.shade800),
                         ),
-                        SizedBox(width: 8),
-                        Icon(Icons.calendar_today, color: Colors.teal, size: 18),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.calendar_today, color: Colors.teal, size: 18),
                       ],
                     ),
                   ),
@@ -116,17 +152,26 @@ class _ExpenseScreenState extends State<ExpenseScreen> {
               ],
             ),
           ),
+          // Loading Indicator
+          if (isLoading)
+            const Center(child: CircularProgressIndicator()),
           // Expense List
-          Expanded(
-            child: ExpenseList(
-              expenses: expenses,
-              onDeleteExpense: (expense) {
-                dataModel.deleteExpense(expense);
-              },
+          if (!isLoading)
+            Expanded(
+              child: ExpenseList(
+                expenses: expenses,
+                onDeleteExpense: (expense) {
+                  dataModel.deleteExpense(expense);
+                },
+              ),
             ),
-          ),
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 }

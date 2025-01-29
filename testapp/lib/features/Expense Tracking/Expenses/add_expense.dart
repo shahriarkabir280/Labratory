@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:my_app/Models/DataModel.dart';
+import 'package:testapp/Models/DataModel.dart';
+
+import '../../../Models/UserState.dart';
+import '../../../backend_connections/api services/features/Expense_Tracking.dart';
 
 class AddExpenseScreen extends StatefulWidget {
+  const AddExpenseScreen({super.key});
+
   @override
   _AddExpenseScreenState createState() => _AddExpenseScreenState();
 }
 
 class _AddExpenseScreenState extends State<AddExpenseScreen> {
   final TextEditingController amountController = TextEditingController();
-  final List<String> categories = ['Groceries', 'Shopping', 'Education', 'Transport','Bills','Medical','Others'];
+  final List<String> categories = ['Groceries', 'Shopping', 'Education', 'Transport', 'Bills', 'Medical', 'Others'];
   String selectedCategory = 'Education';
   DateTime selectedDate = DateTime.now();
 
@@ -31,7 +36,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add Expense'),
+        title: const Text('Add Expense'),
         backgroundColor: Colors.teal,
       ),
       body: Padding(
@@ -42,7 +47,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
             GestureDetector(
               onTap: () => _selectDate(context),
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey),
                   borderRadius: BorderRadius.circular(8),
@@ -53,12 +58,12 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     Text(
                       '${selectedDate.year}-${selectedDate.month}-${selectedDate.day}',
                     ),
-                    Icon(Icons.calendar_today),
+                    const Icon(Icons.calendar_today),
                   ],
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             DropdownButtonFormField<String>(
               value: selectedCategory,
               items: categories.map((category) {
@@ -69,34 +74,53 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                   selectedCategory = value!;
                 });
               },
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Category',
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             TextField(
               controller: amountController,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Amount',
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 if (amountController.text.isNotEmpty) {
-                  final expense = {
-                    'date': selectedDate,
-                    'category': selectedCategory,
-                    'amount': double.parse(amountController.text),
-                  };
-                  Provider.of<DataModel>(context, listen: false).addExpense(expense);
-                  Navigator.pop(context);
+                  final currentGroupCode = Provider.of<UserState>(context, listen: false).currentUser?.currentGroup?.groupCode;
+                  if (currentGroupCode == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("No current group selected")),
+                    );
+                    return;
+                  }
+                  final expense = Expense(
+                    id: '', // Placeholder for server-generated ID
+                    category: selectedCategory,
+                    date: selectedDate,
+                    amount: double.parse(amountController.text),
+                    groupCode: currentGroupCode,
+                  );
+
+                  // Upload expense to the server
+                  final success = await BudgetService.uploadExpense(expense);
+                  if (success) {
+                    // Add expense locally if upload is successful
+                    Provider.of<DataModel>(context, listen: false).addExpense(expense);
+                    Navigator.pop(context);
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Failed to upload expense.')),
+                    );
+                  }
                 }
               },
-              child: Text('Add Expense'),
+              child: const Text('Add Expense'),
             ),
           ],
         ),

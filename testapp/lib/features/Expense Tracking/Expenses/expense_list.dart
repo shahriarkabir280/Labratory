@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:testapp/Models/DataModel.dart'; // Import the DataModel class
 
 class ExpenseList extends StatelessWidget {
-  final List<Map<String, dynamic>> expenses;
-  final Function(Map<String, dynamic>) onDeleteExpense;
+  final List<Expense> expenses; // Use the Expense model here
+  final Function(Expense) onDeleteExpense; // Modify the function signature to handle Expense objects
 
-  ExpenseList({
+  const ExpenseList({super.key,
     required this.expenses,
     required this.onDeleteExpense,
   });
@@ -27,7 +28,7 @@ class ExpenseList extends StatelessWidget {
                 BoxShadow(
                   color: Colors.grey.withOpacity(0.2),
                   blurRadius: 10,
-                  offset: Offset(0, 5),
+                  offset: const Offset(0, 5),
                 ),
               ],
             ),
@@ -41,17 +42,17 @@ class ExpenseList extends StatelessWidget {
                   children: [
                     // Date
                     Text(
-                      DateFormat.yMMMMd().format(expense['date']),
+                      DateFormat.yMMMMd().format(expense.date),
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.teal.shade800,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     // Category
                     Text(
-                      expense['category'],
+                      expense.category,
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey.shade600,
@@ -59,25 +60,14 @@ class ExpenseList extends StatelessWidget {
                     ),
                   ],
                 ),
-                // Amount and Delete Button
-                Row(
-                  children: [
-                    // Amount
-                    Text(
-                      '\৳${expense['amount'].toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.orangeAccent,
-                      ),
-                    ),
-                    SizedBox(width: 16),
-                    // Delete Button
-                    IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => onDeleteExpense(expense),
-                    ),
-                  ],
+                // Amount
+                Text(
+                  '৳${expense.amount.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orangeAccent,
+                  ),
                 ),
               ],
             ),
