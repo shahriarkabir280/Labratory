@@ -79,6 +79,8 @@ flutter:
   assets:
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
+      - assets/TimeCapsuleIcons/audioIcon.jpg
+      - assets/TimeCapsuleIcons/videoIcon.jpg
       - assets/authentications/famNestlogo.png
       - assets/authentications/test.png
       - assets/authentications/banner.png
