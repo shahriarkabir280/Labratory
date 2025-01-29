@@ -3,6 +3,8 @@ import 'month_wise_analysis.dart'; // Adjust path if needed
 import 'year_wise_analysis.dart'; // Adjust path if needed
 
 class AnalyticsScreen extends StatelessWidget {
+  const AnalyticsScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -10,13 +12,13 @@ class AnalyticsScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           toolbarHeight: 40,
-          title: Text(
+          title: const Text(
             'Analytics',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           centerTitle: true,
           backgroundColor: Colors.teal,
-          bottom: TabBar(
+          bottom: const TabBar(
             tabs: [
               Tab(
                 icon: Icon(Icons.calendar_month),
@@ -29,8 +31,8 @@ class AnalyticsScreen extends StatelessWidget {
             ],
           ),
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
+        body: const Padding(
+          padding: EdgeInsets.all(16.0),
           child: TabBarView(
             children: [
               // Month-wise Analysis Page
