@@ -35,7 +35,8 @@ dependencies:
   syncfusion_flutter_calendar: ^20.4.40
   image_picker: ^1.1.2
   video_player: ^2.4.5
-
+  just_audio: ^0.9.23
+  share_plus: ^10.1.4
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -49,7 +50,7 @@ dependencies:
   flutter_speed_dial: ^7.0.0
   image_picker_web: ^4.0.0
   permission_handler: ^10.2.0
-  
+  flutter_downloader: ^1.9.0
   
 
 dev_dependencies:
